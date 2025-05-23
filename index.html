@@ -26,7 +26,7 @@
     }
     textarea { width: 100%; height: 60px; resize: vertical; }
     input[list], input[type="text"] { width: 100%; }
-    #targeoMap {
+    #mapaFrame {
       width: 100%;
       height: 500px;
       margin-top: 30px;
@@ -35,13 +35,6 @@
   </style>
 </head>
 <body>
-
-<div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
-  <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
-  <div id="truck-widget-frame">
-    <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
-  </div>
-</div>
 
 <h1>Platforma Załadunku i Rozładunku</h1>
 <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
@@ -70,31 +63,7 @@
   <tbody></tbody>
 </table>
 
-<div id="mapaLink" style="margin-top:20px; text-align:center;">
-  <a id="linkDoTargeo" href="#" target="_blank" style="font-weight:bold; font-size:1.2em; display:inline-block; padding:10px 20px; background:#f0f0f0; border:1px solid #ccc; border-radius:5px; text-decoration:none;">🔗 Otwórz trasę w Targeo</a>
-</div>
-
-<script>
-function toggleTruckWidget() {
-  const frame = document.getElementById("truck-widget-frame");
-  frame.style.display = (frame.style.display === "none") ? "block" : "none";
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  fetch("kodypolska.json")
-    .then(response => response.json())
-    .then(data => {
-      const datalist = document.getElementById("lokalizacje");
-      data.forEach(entry => {
-        const label = `${entry.place_name} ${entry.postal_code}`.trim();
-        const option = document.createElement("option");
-        option.value = label;
-        datalist.appendChild(option);
-      });
-    })
-    .catch(error => console.error("Błąd podczas ładowania lokalizacji:", error));
-});
-</script>
+<iframe id="mapaFrame" src="https://maps.google.com/maps?q=Polska&output=embed"></iframe>
 
 <script>
 function dodajWiersz() {
@@ -158,9 +127,7 @@ function zmienAktualnosc(select) {
   else if (select.value === "nieaktualne") td.classList.add("status-nieaktualne");
   else if (select.value === "nieznane") td.classList.add("status-nieznane");
 }
-</script>
 
-<script>
 function pokazNaMapie(checkbox) {
   if (!checkbox.checked) return;
 
@@ -168,13 +135,10 @@ function pokazNaMapie(checkbox) {
   const ladunek = wiersz.cells[1].querySelector("input").value;
   const rozladunek = wiersz.cells[4].querySelector("input").value;
 
-  const start = encodeURIComponent(ladunek);
-  const cel = encodeURIComponent(rozladunek);
-  const link = `https://mapa.targeo.pl/${start}~${cel}?truck=1`;
-
-  const a = document.getElementById("linkDoTargeo");
-  a.href = link;
-  a.textContent = `🔗 Trasa: ${ladunek} → ${rozladunek}`;
+  if (ladunek && rozladunek) {
+    const mapa = document.getElementById("mapaFrame");
+    const url = `https://maps.google.com/maps?saddr=${encodeURIComponent(ladunek)}&daddr=${encodeURIComponent(rozladunek)}&output=embed`;
+    mapa.src = url;
   }
 }
 </script>
