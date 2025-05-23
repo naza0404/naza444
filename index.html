@@ -1,9 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <title>Platforma Za�adunku i Roz�adunku</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <title>Platforma Załadunku i Rozładunku</title>
   <style>
     body { font-family: Arial, sans-serif; }
     table {
@@ -27,34 +26,39 @@
     }
     textarea { width: 100%; height: 60px; resize: vertical; }
     input[list], input[type="text"] { width: 100%; }
-    #map { height: 400px; margin-top: 30px; }
+    #targeoMap {
+      width: 100%;
+      height: 500px;
+      margin-top: 30px;
+      border: none;
+    }
   </style>
 </head>
 <body>
 
 <div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
-  <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Poka�/Ukryj zakazy ruchu</button>
+  <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
   <div id="truck-widget-frame">
     <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
   </div>
 </div>
 
-<h1>Platforma Za�adunku i Roz�adunku</h1>
-<button onclick="dodajWiersz()">? Dodaj nowy wiersz</button>
+<h1>Platforma Załadunku i Rozładunku</h1>
+<button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
 <datalist id="lokalizacje"></datalist>
 
 <table id="tabela">
   <thead>
     <tr>
       <th>PILNE</th>
-      <th>Za�adunek</th>
-      <th>Data za�adunku (od-do)</th>
-      <th>Godzina za�adunku (od-do)</th>
-      <th>Roz�adunek</th>
-      <th>Data roz�adunku (od-do)</th>
-      <th>Godzina roz�adunku (od-do)</th>
-      <th>Spos�b za�adunku</th>
-      <th>Potwierd� aktualno��</th>
+      <th>Załadunek</th>
+      <th>Data załadunku (od-do)</th>
+      <th>Godzina załadunku (od-do)</th>
+      <th>Rozładunek</th>
+      <th>Data rozładunku (od-do)</th>
+      <th>Godzina rozładunku (od-do)</th>
+      <th>Sposób załadunku</th>
+      <th>Potwierdź aktualność</th>
       <th>Uwagi</th>
       <th>Stawka</th>
       <th>Kilometry</th>
@@ -66,57 +70,114 @@
   <tbody></tbody>
 </table>
 
-<div id="map"></div>
+<div id="mapaLink" style="margin-top:20px; text-align:center;">
+  <a id="linkDoTargeo" href="#" target="_blank" style="font-weight:bold; font-size:1.2em; display:inline-block; padding:10px 20px; background:#f0f0f0; border:1px solid #ccc; border-radius:5px; text-decoration:none;">🔗 Otwórz trasę w Targeo</a>
+</div>
 
 <script>
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
   frame.style.display = (frame.style.display === "none") ? "block" : "none";
 }
-</script>
 
-<script>
 window.addEventListener('DOMContentLoaded', () => {
   fetch("kodypolska.json")
     .then(response => response.json())
     .then(data => {
       const datalist = document.getElementById("lokalizacje");
       data.forEach(entry => {
-        const label = `${entry.postal_code} ${entry.place_name}`.trim();
+        const label = `${entry.place_name} ${entry.postal_code}`.trim();
         const option = document.createElement("option");
         option.value = label;
         datalist.appendChild(option);
       });
     })
-    .catch(error => console.error("B��d podczas �adowania lokalizacji:", error));
+    .catch(error => console.error("Błąd podczas ładowania lokalizacji:", error));
 });
 </script>
 
-
-<div id="mapa-targeo" style="margin-top: 30px; display:none;">
-  <h3>Mapa Targeo � trasa za�adunek ? roz�adunek</h3>
-  <iframe id="iframe-mapa" width="100%" height="500" frameborder="0"></iframe>
-</div>
-
-</body>
-
 <script>
-function pokazMape(btn) {
-  const row = btn.closest("tr");
-  const zaladunek = row.cells[1].querySelector("input")?.value || '';
-  const rozladunek = row.cells[4].querySelector("input")?.value || '';
+function dodajWiersz() {
+  const tabela = document.getElementById("tabela").getElementsByTagName("tbody")[0];
+  const wiersz = tabela.insertRow();
+  wiersz.classList.add("pilne");
+  wiersz.innerHTML = `
+    <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
+    <td><input type="text" list="lokalizacje" placeholder="Kod + miasto, kraj"></td>
+    <td class="date-time-group"><input type="date"> <input type="date"></td>
+    <td class="date-time-group"><input type="time"> <input type="time"></td>
+    <td><input type="text" list="lokalizacje" placeholder="Kod + miasto, kraj"></td>
+    <td class="date-time-group"><input type="date"> <input type="date"></td>
+    <td class="date-time-group"><input type="time"> <input type="time"></td>
+    <td>
+      <select>
+        <option value="tyłem">Tyłem</option>
+        <option value="bokiem">Bokiem</option>
+        <option value="górą">Górą</option>
+        <option value="bok_góra">Bok + Góra</option>
+        <option value="auto_winda">Auto z windą</option>
+        <option value="inne">Inne</option>
+      </select>
+    </td>
+    <td>
+      <select onchange="zmienAktualnosc(this)">
+        <option value="">-- wybierz --</option>
+        <option value="aktualne">Aktualne</option>
+        <option value="nieaktualne">Nieaktualne</option>
+        <option value="nieznane">???</option>
+      </select>
+    </td>
+    <td><textarea placeholder="Uwagi"></textarea></td>
+    <td><input type="text" placeholder="Stawka"></td>
+    <td><input type="text" placeholder="km"></td>
+    <td><input type="text" placeholder="zł/km"></td>
+    <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
+    <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
+  `;
+}
 
-  if (!zaladunek || !rozladunek) {
-    alert("Uzupe�nij miejscowo�ci za�adunku i roz�adunku.");
-    return;
+function togglePilne(checkbox) {
+  const wiersz = checkbox.closest("tr");
+  wiersz.classList.toggle("pilne", checkbox.checked);
+  const tbody = document.getElementById("tabela").getElementsByTagName("tbody")[0];
+  tbody.removeChild(wiersz);
+  checkbox.checked ? tbody.insertBefore(wiersz, tbody.firstChild) : tbody.appendChild(wiersz);
+}
+
+function usunWiersz(button) {
+  if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
+    const wiersz = button.closest("tr");
+    wiersz.remove();
   }
+}
 
-  const start = encodeURIComponent(zaladunek);
-  const end = encodeURIComponent(rozladunek);
-  const mapaUrl = `https://targeo.pl/routeCalc.php?from=${start}&to=${end}`;
-
-  document.getElementById("iframe-mapa").src = mapaUrl;
-  document.getElementById("mapa-targeo").style.display = "block";
+function zmienAktualnosc(select) {
+  const td = select.parentNode;
+  td.classList.remove("status-aktualne", "status-nieaktualne", "status-nieznane");
+  if (select.value === "aktualne") td.classList.add("status-aktualne");
+  else if (select.value === "nieaktualne") td.classList.add("status-nieaktualne");
+  else if (select.value === "nieznane") td.classList.add("status-nieznane");
 }
 </script>
+
+<script>
+function pokazNaMapie(checkbox) {
+  if (!checkbox.checked) return;
+
+  const wiersz = checkbox.closest("tr");
+  const ladunek = wiersz.cells[1].querySelector("input").value;
+  const rozladunek = wiersz.cells[4].querySelector("input").value;
+
+  const start = encodeURIComponent(ladunek);
+  const cel = encodeURIComponent(rozladunek);
+  const link = `https://mapa.targeo.pl/${start}~${cel}?truck=1`;
+
+  const a = document.getElementById("linkDoTargeo");
+  a.href = link;
+  a.textContent = `🔗 Trasa: ${ladunek} → ${rozladunek}`;
+  }
+}
+</script>
+
+</body>
 </html>
