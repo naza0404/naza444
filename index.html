@@ -36,11 +36,12 @@
 </head>
 <body>
 
-<div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
+<div id="truck-ban-widget" style="position: sticky; top: 0; z-index: 1000; background: white; padding-bottom: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
   <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
   <div id="truck-widget-frame">
     <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
   </div>
+</div>
 </div>
 
 <h1>Platforma Załadunku i Rozładunku</h1>
@@ -72,11 +73,46 @@
 <div id="map" style="height: 500px; margin-top: 30px;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
 <script>
+
+// Zapis danych do localStorage po każdej zmianie
+function zapiszDoLocalStorage() {
+  const dane = [];
+  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+    const komorki = wiersz.querySelectorAll("td");
+    const rekord = Array.from(komorki).map(td => {
+      const input = td.querySelector("input, select, textarea");
+      return input ? input.value || input.checked : "";
+    });
+    dane.push(rekord);
+  });
+  localStorage.setItem("platforma_zaladunku_dane", JSON.stringify(dane));
+}
+
+function wczytajZLocalStorage() {
+  const dane = JSON.parse(localStorage.getItem("platforma_zaladunku_dane"));
+  if (!dane) return;
+  dane.forEach(rekord => {
+    dodajWiersz();
+    const ostatni = document.querySelector("#tabela tbody tr:last-child");
+    const komorki = ostatni.querySelectorAll("td");
+    rekord.forEach((wartosc, i) => {
+      const input = komorki[i]?.querySelector("input, select, textarea");
+      if (!input) return;
+      if (input.type === "checkbox") input.checked = (wartosc === true || wartosc === "true");
+      else input.value = wartosc;
+    });
+  });
+}
+
+window.addEventListener("beforeunload", zapiszDoLocalStorage);
+window.addEventListener("DOMContentLoaded", wczytajZLocalStorage);
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
-  frame.style.display = (frame.style.display === "none") ? "block" : "none";
+  const button = document.querySelector("#truck-ban-widget button");
+  const isHidden = frame.style.display === "none";
+  frame.style.display = isHidden ? "block" : "none";
+  button.textContent = isHidden ? "Ukryj zakazy ruchu" : "Pokaż zakazy ruchu";
 }
 
 window.addEventListener('DOMContentLoaded', () => {
