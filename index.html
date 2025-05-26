@@ -150,6 +150,41 @@ function pokazNaMapie(checkbox) {
   Promise.all([
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
       .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)]),
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
+      .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)])
+  ]).then(([startCoord, endCoord]) => {
+    if (!startCoord || !endCoord) return;
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${startCoord.join(',')};${endCoord.join(',')}?overview=full&geometries=geojson`;
+    fetch(url)
+      .then(res => res.json())
+      .then(result => {
+        if (!result.routes || !result.routes[0]) return;
+
+        const route = result.routes[0];
+        const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+        if (window.mapLayer) window.map.removeLayer(window.mapLayer);
+        if (window.startMarker) window.map.removeLayer(window.startMarker);
+        if (window.endMarker) window.map.removeLayer(window.endMarker);
+
+        window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
+        window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
+        window.endMarker = L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup('Rozładunek');
+        map.fitBounds(window.mapLayer.getBounds());
+
+        const km = (route.distance / 1000).toFixed(1);
+        if (kmCell) kmCell.value = km;
+        const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
+        if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
+          stawkaKmCell.value = (stawka / km).toFixed(2);
+        }
+      });
+  });
+}`)
+      .then(res => res.json())
       .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)]),
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
       .then(res => res.json())
