@@ -143,6 +143,9 @@ function pokazNaMapie(checkbox) {
   const wiersz = checkbox.closest("tr");
   const ladunek = wiersz.cells[1].querySelector("input").value;
   const rozladunek = wiersz.cells[4].querySelector("input").value;
+  const kmCell = wiersz.cells[11].querySelector("input");
+  const stawkaCell = wiersz.cells[10].querySelector("input");
+  const stawkaKmCell = wiersz.cells[12].querySelector("input");
 
   Promise.all([
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
@@ -153,6 +156,7 @@ function pokazNaMapie(checkbox) {
       .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)])
   ]).then(([startCoord, endCoord]) => {
     if (!startCoord || !endCoord) return;
+
     if (window.mapLayer) window.map.removeLayer(window.mapLayer);
     if (window.startMarker) window.map.removeLayer(window.startMarker);
     if (window.endMarker) window.map.removeLayer(window.endMarker);
@@ -161,11 +165,23 @@ function pokazNaMapie(checkbox) {
     window.startMarker = L.marker(startCoord).addTo(map).bindPopup('Załadunek');
     window.endMarker = L.marker(endCoord).addTo(map).bindPopup('Rozładunek');
     map.fitBounds([startCoord, endCoord]);
-  });
-}+search=${end}`;
 
-  const iframe = document.getElementById('tomtomMap');
-  if (iframe) iframe.src = url;
+    const R = 6371; // promień Ziemi w km
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(endCoord[0] - startCoord[0]);
+    const dLon = toRad(endCoord[1] - startCoord[1]);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRad(startCoord[0])) * Math.cos(toRad(endCoord[0])) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const km = (R * c).toFixed(1);
+
+    if (kmCell) kmCell.value = km;
+    const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
+    if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
+      stawkaKmCell.value = (stawka / km).toFixed(2);
+    }
+  });
 }
 </script>
 <script>
