@@ -134,6 +134,13 @@ function dodajWiersz() {
     <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
   `;
 }
+
+function usunWiersz(button) {
+  if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
+    const wiersz = button.closest("tr");
+    wiersz.remove();
+  }
+}
 </script>
 
 <script>
