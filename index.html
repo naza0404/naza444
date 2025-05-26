@@ -183,40 +183,6 @@ function pokazNaMapie(checkbox) {
         }
       });
   });
-}`)
-      .then(res => res.json())
-      .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)]),
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
-      .then(res => res.json())
-      .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)])
-  ]).then(([startCoord, endCoord]) => {
-    if (!startCoord || !endCoord) return;
-
-    if (window.mapLayer) window.map.removeLayer(window.mapLayer);
-    if (window.startMarker) window.map.removeLayer(window.startMarker);
-    if (window.endMarker) window.map.removeLayer(window.endMarker);
-
-    window.mapLayer = L.polyline([startCoord, endCoord], { color: 'blue' }).addTo(map);
-    window.startMarker = L.marker(startCoord).addTo(map).bindPopup('Załadunek');
-    window.endMarker = L.marker(endCoord).addTo(map).bindPopup('Rozładunek');
-    map.fitBounds([startCoord, endCoord]);
-
-    const R = 6371; // promień Ziemi w km
-    const toRad = x => x * Math.PI / 180;
-    const dLat = toRad(endCoord[0] - startCoord[0]);
-    const dLon = toRad(endCoord[1] - startCoord[1]);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(toRad(startCoord[0])) * Math.cos(toRad(endCoord[0])) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const km = (R * c).toFixed(1);
-
-    if (kmCell) kmCell.value = km;
-    const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
-    if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
-      stawkaKmCell.value = (stawka / km).toFixed(2);
-    }
-  });
 }
 </script>
 <script>
