@@ -142,6 +142,26 @@ function usunWiersz(button) {
   }
 }
 </script>
+<script>
+function aktualizujStawkeZKm(wiersz) {
+  const kmInput = wiersz.cells[11].querySelector("input");
+  const stawkaInput = wiersz.cells[10].querySelector("input");
+  const wynikInput = wiersz.cells[12].querySelector("input");
+  const km = parseFloat(kmInput.value.replace(',', '.'));
+  const stawka = parseFloat(stawkaInput.value.replace(',', '.'));
+  if (!isNaN(km) && !isNaN(stawka) && km > 0) {
+    wynikInput.value = (stawka / km).toFixed(2);
+  } else {
+    wynikInput.value = "";
+  }
+}
+
+// Obserwuj zmiany wartości w stawce i kilometrach
+setInterval(() => {
+  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+    aktualizujStawkeZKm(wiersz);
+  });
+}, 1000);
 
 <script>
 function pokazNaMapie(checkbox) {
