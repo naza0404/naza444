@@ -36,7 +36,7 @@
 </head>
 <body>
 
-<div id="truck-ban-widget" style="position: sticky; top: 0; z-index: 1000; background: white; padding-bottom: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+<div id="truck-ban-widget" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; background: white; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
   <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
   <div id="truck-widget-frame">
     <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
@@ -44,6 +44,7 @@
 </div>
 </div>
 
+<div style="height: 340px;"></div>
 <h1>Platforma Załadunku i Rozładunku</h1>
 <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
 <datalist id="lokalizacje"></datalist>
