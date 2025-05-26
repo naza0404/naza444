@@ -69,9 +69,9 @@
   </thead>
   <tbody></tbody>
 </table>
-<div style="margin-top: 30px; text-align:center">
-  <iframe id="tomtomMap" src="" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
-</div>
+<div id="map" style="height: 500px; margin-top: 30px;"></div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 <script>
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
@@ -144,14 +144,36 @@ function pokazNaMapie(checkbox) {
   const ladunek = wiersz.cells[1].querySelector("input").value;
   const rozladunek = wiersz.cells[4].querySelector("input").value;
 
-  const start = encodeURIComponent(ladunek);
-  const end = encodeURIComponent(rozladunek);
-  const url = `https://mydrive.tomtom.com/pl_pl/#mode=search+viewport=52.2297,21.0122,7+search=${start}+search=${end}`;
+  Promise.all([
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
+      .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)]),
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
+      .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lat), parseFloat(data[0].lon)])
+  ]).then(([startCoord, endCoord]) => {
+    if (!startCoord || !endCoord) return;
+    if (window.mapLayer) window.map.removeLayer(window.mapLayer);
+    if (window.startMarker) window.map.removeLayer(window.startMarker);
+    if (window.endMarker) window.map.removeLayer(window.endMarker);
+
+    window.mapLayer = L.polyline([startCoord, endCoord], { color: 'blue' }).addTo(map);
+    window.startMarker = L.marker(startCoord).addTo(map).bindPopup('Załadunek');
+    window.endMarker = L.marker(endCoord).addTo(map).bindPopup('Rozładunek');
+    map.fitBounds([startCoord, endCoord]);
+  });
+}+search=${end}`;
 
   const iframe = document.getElementById('tomtomMap');
   if (iframe) iframe.src = url;
 }
 </script>
-
+<script>
+const map = L.map('map').setView([52.2297, 21.0122], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 18
+}).addTo(map);
+</script>
 </body>
 </html>
