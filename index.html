@@ -195,9 +195,9 @@ function pokazNaMapie(checkbox) {
         const route = result.routes[0];
         const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
-        if (window.mapLayer) window.map.removeLayer(window.mapLayer);
-        if (window.startMarker) window.map.removeLayer(window.startMarker);
-        if (window.endMarker) window.map.removeLayer(window.endMarker);
+        if (window.mapLayer) { map.removeLayer(window.mapLayer); window.mapLayer = null; }
+if (window.startMarker) { map.removeLayer(window.startMarker); window.startMarker = null; }
+if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = null; }
 
         window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
         window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
