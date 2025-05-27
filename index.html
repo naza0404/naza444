@@ -203,16 +203,23 @@ function toggleTruckWidget() {
 
 function zaladujMiasta() {
   fetch('kodypolska.json')
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) throw new Error('Brak dostępu do pliku kodypolska.json');
+      return response.json();
+    })
     .then(data => {
       const datalist = document.getElementById("lokalizacje");
+      if (!datalist) return;
       datalist.innerHTML = "";
       data.forEach(entry => {
         const option = document.createElement("option");
         option.value = `${entry.place_name} ${entry.postal_code}`;
         datalist.appendChild(option);
       });
-    });
+      console.log("Załadowano miasta:", data.length);
+    })
+    .catch(error => console.error("Błąd ładowania miejscowości:", error));
+}
 }
 
 window.addEventListener("DOMContentLoaded", () => {
