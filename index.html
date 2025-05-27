@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+const supabase = supabase.createClient(
+  'https://bfknyzfmhojjghhkxyrv.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
+);
+</script>
+
   <meta charset="UTF-8">
   <title>Platforma Załadunku i Rozładunku</title>
   <style>
@@ -44,13 +53,7 @@
 </head>
 <body>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://bfknyzfmhojjghhkxyrv.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
-  );
-</script>
+
 
 
 <div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
@@ -109,7 +112,7 @@ window.addEventListener('DOMContentLoaded', () => {
         datalist.appendChild(option);
       });
     })
-    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
+    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error);
 });
 </script>
 
@@ -166,8 +169,8 @@ function aktualizujStawkeZKm(wiersz) {
   const kmInput = wiersz.cells[11].querySelector("input");
   const stawkaInput = wiersz.cells[10].querySelector("input");
   const wynikInput = wiersz.cells[12].querySelector("input");
-  const km = parseFloat(kmInput.value.replace(',', '.'));
-  const stawka = parseFloat(stawkaInput.value.replace(',', '.'));
+  const km = parseFloat(kmInput.value.replace(',', '.');
+  const stawka = parseFloat(stawkaInput.value.replace(',', '.');
   if (!isNaN(km) && !isNaN(stawka) && km > 0) {
     wynikInput.value = (stawka / km).toFixed(2);
   } else {
@@ -220,11 +223,11 @@ if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = nu
         window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
         window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
         window.endMarker = L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup('Rozładunek');
-        map.fitBounds(window.mapLayer.getBounds());
+        map.fitBounds(window.mapLayer.getBounds();
 
         const km = (route.distance / 1000).toFixed(1);
         if (kmCell) kmCell.value = km;
-        const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
+        const stawka = parseFloat(stawkaCell.value.replace(',', '.');
         if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
           stawkaKmCell.value = (stawka / km).toFixed(2);
         }
