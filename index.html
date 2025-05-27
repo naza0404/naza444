@@ -75,9 +75,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  wczytajZSupabase();
-  setTimeout(() => podlaczAutoZapis(), 2000);
+window.addEventListener("DOMContentLoaded", async () => {
+  await wczytajZSupabase();
+  podlaczAutoZapis();
   zaladujMiasta();
 });
 // 🔁 Zapis automatyczny po każdej zmianie w polach
@@ -191,7 +191,7 @@ async function wczytajZSupabase() {
   });
 }
 
-window.addEventListener("beforeunload", zapiszDoSupabase);
+
 
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
