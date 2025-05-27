@@ -74,8 +74,12 @@
 <div id="map" style="height: 500px; margin-top: 30px;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
 <script>
+window.addEventListener("DOMContentLoaded", () => {
+  wczytajZSupabase();
+  setTimeout(() => podlaczAutoZapis(), 2000);
+  zaladujMiasta();
+});
 // 🔁 Zapis automatyczny po każdej zmianie w polach
 function podlaczAutoZapis() {
   document.querySelectorAll('#tabela input, #tabela select, #tabela textarea').forEach(el => {
@@ -131,7 +135,10 @@ async function zapiszDoSupabase() {
     } else {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
         method: 'POST',
-        headers: supabaseHeaders,
+        headers: {
+        ...supabaseHeaders,
+        'Prefer': 'return=representation'
+      },
         body: JSON.stringify(rekord)
       });
       const inserted = await res.json();
@@ -185,7 +192,7 @@ async function wczytajZSupabase() {
 }
 
 window.addEventListener("beforeunload", zapiszDoSupabase);
-window.addEventListener("DOMContentLoaded", wczytajZSupabase);
+
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
   const button = document.querySelector("#truck-ban-widget button");
