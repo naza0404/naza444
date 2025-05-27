@@ -35,12 +35,7 @@
   </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const client = window.supabase.createClient(
-    'https://bfknyzfmhojjghhkxyrv.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
-  );
-</script>
+
 
 </head>
 <body>
@@ -300,5 +295,87 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 </script>
 
+<script>
+    const supabase = window.supabase.createClient(
+      'https://bfknyzfmhojjghhkxyrv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
+    );
+
+    async function autoSave(row) {
+      if (!row || !row.cells || row.cells.length < 13) return;
+      const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value?.trim() || "";
+
+      const dane = {
+        zaladunek: input(1),
+        data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value.trim() || "",
+        data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value.trim() || "",
+        rozladunek: input(4),
+        data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value.trim() || "",
+        data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value.trim() || "",
+        sposob_zaladunku: input(7),
+        aktualnosc: input(8),
+        uwagi: input(9),
+        stawka: input(10),
+        kilometry: input(11),
+        stawka_km: input(12)
+      };
+
+      const filled = Object.values(dane).filter(v => v !== "").length;
+      if (filled < 2) return;
+
+      if (row.dataset.id) {
+        const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+        if (error) console.error("Błąd aktualizacji:", error.message);
+        else console.log("Zaktualizowano wiersz:", row.dataset.id);
+      } else {
+        const { data, error } = await supabase.from("translider").insert([dane]).select("id");
+        if (error) console.error("Błąd zapisu:", error.message);
+        else {
+          console.log("Zapisano wiersz:", data[0]?.id);
+          row.dataset.id = data[0]?.id;
+        }
+      }
+    }
+
+    document.addEventListener("change", (e) => {
+      const row = e.target.closest("tr");
+      if (row) autoSave(row);
+    });
+
+    document.addEventListener("blur", (e) => {
+      const row = e.target.closest("tr");
+      if (row) autoSave(row);
+    }, true);
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const { data, error } = await supabase.from("translider").select("*");
+      if (error) return console.error("Błąd odczytu:", error.message);
+
+      const tabela = document.querySelector("#tabela tbody");
+      data.forEach(entry => {
+        const row = tabela.insertRow();
+        row.dataset.id = entry.id;
+        row.innerHTML = `
+          <td>•</td>
+          <td><input type="text" value="${entry.zaladunek || ''}"></td>
+          <td><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
+          <td><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
+          <td><input type="text" value="${entry.rozladunek || ''}"></td>
+          <td><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
+          <td><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
+          <td><input type="text" value="${entry.sposob_zaladunku || ''}"></td>
+          <td><input type="text" value="${entry.aktualnosc || ''}"></td>
+          <td><textarea>${entry.uwagi || ''}</textarea></td>
+          <td><input type="number" value="${entry.stawka || ''}" step="0.01"></td>
+          <td><input type="number" value="${entry.kilometry || ''}" step="1"></td>
+          <td><input type="number" value="${entry.stawka_km || ''}" step="0.01"></td>
+        `;
+      });
+    });
+  </script>
 </body>
 </html>
