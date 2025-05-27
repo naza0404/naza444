@@ -265,6 +265,8 @@ async function zapiszWierszAutomatycznie(row) {
   } else {
     console.log("✅ Autozapisano nowy wiersz do Supabase");
     row.dataset.zapisany = "true";
+      const statusCell = row.querySelector('.status');
+      if (statusCell) statusCell.textContent = '✅';
     row.dataset.id = data[0]?.id;
   }
 }
@@ -338,6 +340,8 @@ async function zapiszWierszAutomatycznie(row) {
   } else {
     console.log("✅ Autozapisano nowy wiersz do Supabase");
     row.dataset.zapisany = "true";
+      const statusCell = row.querySelector('.status');
+      if (statusCell) statusCell.textContent = '✅';
     row.dataset.id = data[0]?.id;
   }
 }
@@ -386,20 +390,30 @@ document.addEventListener("blur", (e) => {
     const { error, data } = await supabase.from("translider").insert([dane]).select("id");
     if (error) {
       console.error("❌ Błąd zapisu:", error.message);
+      const statusCell = row.querySelector('.status');
+      if (statusCell) statusCell.textContent = '❌';
     } else {
       console.log("✅ Zapisano wiersz:", data[0]?.id);
       row.dataset.zapisany = "true";
+      const statusCell = row.querySelector('.status');
+      if (statusCell) statusCell.textContent = '✅';
     }
   }
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
-    if (row && row.dataset.zapisany !== "true") autoSave(row);
+    
+    const statusCell = row.querySelector('.status');
+    if (statusCell) statusCell.textContent = "⏳";
+if (row && row.dataset.zapisany !== "true") autoSave(row);
   });
 
   document.addEventListener("blur", (e) => {
     const row = e.target.closest("tr");
-    if (row && row.dataset.zapisany !== "true") autoSave(row);
+    
+    const statusCell = row.querySelector('.status');
+    if (statusCell) statusCell.textContent = "⏳";
+if (row && row.dataset.zapisany !== "true") autoSave(row);
   }, true);
 </script>
 
