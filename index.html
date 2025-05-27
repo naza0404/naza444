@@ -176,5 +176,14 @@ async function zapiszDane() {
 }
 </script>
 
+
+<script>
+const map = L.map('map').setView([52.2297, 21.0122], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 18
+}).addTo(map);
+</script>
+
 </body>
 </html>
