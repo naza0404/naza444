@@ -122,7 +122,10 @@ async function zapiszDoSupabase() {
     if (rekordId) {
       await fetch(`${SUPABASE_URL}/rest/v1/zaladunki?id=eq.${rekordId}`, {
         method: 'PATCH',
-        headers: supabaseHeaders,
+        headers: {
+        ...supabaseHeaders,
+        'Prefer': 'return=representation'
+      },
         body: JSON.stringify(rekord)
       });
     } else {
@@ -191,7 +194,7 @@ function toggleTruckWidget() {
   button.textContent = isHidden ? "Ukryj zakazy ruchu" : "Pokaż zakazy ruchu";
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+function zaladujMiasta() {
   fetch('kodypolska.json')
     .then(response => response.json())
     .then(data => {
@@ -202,6 +205,15 @@ window.addEventListener('DOMContentLoaded', () => {
         option.value = `${entry.place_name} ${entry.postal_code}`;
         datalist.appendChild(option);
       });
+    })
+    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  wczytajZSupabase();
+  setTimeout(() => podlaczAutoZapis(), 2000);
+  zaladujMiasta();
+});
     })
     .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
 });
