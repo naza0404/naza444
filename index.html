@@ -256,14 +256,15 @@ async function zapiszDane() {
       stawka_km: input(12),
     };
 
-    const { error } = await client.from("translider").insert([dane]);
-    if (error) {
-      console.error("❌ Błąd zapisu:", error.message);
-      alert("❌ Błąd zapisu: " + error.message);
-    }
-  }
+  const { error } = await client.from("translider").insert([dane]);
+if (error) {
+  console.error("❌ Błąd zapisu:", error.message);
+  alert("❌ Błąd zapisu: " + error.message);
+} else {
+  console.log("✅ Zapisano dane:", dane);
   alert("✅ Dane zapisane!");
 }
+
 
 window.addEventListener("DOMContentLoaded", async () => {
   const { data, error } = await client.from("translider").select("*");
