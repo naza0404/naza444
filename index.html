@@ -97,7 +97,7 @@
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
-    if (row) autoSave(row);
+    if (row && row.dataset) autoSave(row);
   });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
