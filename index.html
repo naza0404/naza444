@@ -234,59 +234,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 
 
-<script>
-async function zapiszWierszAutomatycznie(row) {
-  if (row.dataset.zapisany === "true") return;
 
-  const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
-  const dane = {
-    zaladunek: input(1),
-    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
-    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
-    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
-    rozladunek: input(4),
-    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
-    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
-    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
-    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
-    sposob_zaladunku: input(7),
-    aktualnosc: input(8),
-    uwagi: input(9),
-    stawka: input(10),
-    kilometry: input(11),
-    stawka_km: input(12),
-  };
-
-  const { data, error } = await client.from("translider").insert([dane]).select("id");
-
-  if (error) {
-    console.error("❌ Błąd auto zapisu:", error.message);
-  } else {
-    console.log("✅ Autozapisano nowy wiersz do Supabase");
-    row.dataset.zapisany = "true";
-                row.dataset.id = data[0]?.id;
-  }
-}
-
-document.addEventListener("change", (e) => {
-  const row = e.target.closest("tr");
-  if (row && row.dataset.zapisany === "false") zapiszWierszAutomatycznie(row);
-});
-
-document.addEventListener("blur", (e) => {
-  const row = e.target.closest("tr");
-  if (row && row.dataset.zapisany === "false") zapiszWierszAutomatycznie(row);
-}, true);
-
-// poprzedni nasłuch:
-  const row = e.target.closest("tr");
-  if (row && row.dataset.zapisany === "false") {
-    clearTimeout(row.autosaveTimeout);
-    row.autosaveTimeout = setTimeout(() => zapiszWierszAutomatycznie(row), 1500);
-  }
-});
-</script>
 
 
 <script>
@@ -307,51 +255,7 @@ document.addEventListener("blur", (e) => {
 </script>
 
 
-<script>
-async function zapiszWierszAutomatycznie(row) {
-  if (row.dataset.zapisany === "true") return;
 
-  const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
-  const dane = {
-    zaladunek: input(1),
-    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
-    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
-    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
-    rozladunek: input(4),
-    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
-    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
-    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
-    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
-    sposob_zaladunku: input(7),
-    aktualnosc: input(8),
-    uwagi: input(9),
-    stawka: input(10),
-    kilometry: input(11),
-    stawka_km: input(12),
-  };
-
-  const { data, error } = await client.from("translider").insert([dane]).select("id");
-
-  if (error) {
-    console.error("❌ Błąd auto zapisu:", error.message);
-  } else {
-    console.log("✅ Autozapisano nowy wiersz do Supabase");
-    row.dataset.zapisany = "true";
-                row.dataset.id = data[0]?.id;
-  }
-}
-
-document.addEventListener("change", (e) => {
-  const row = e.target.closest("tr");
-  if (row && row.dataset.zapisany !== "true") zapiszWierszAutomatycznie(row);
-});
-
-document.addEventListener("blur", (e) => {
-  const row = e.target.closest("tr");
-  if (row && row.dataset.zapisany !== "true") zapiszWierszAutomatycznie(row);
-}, true);
-</script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -392,18 +296,13 @@ document.addEventListener("blur", (e) => {
                 }
   }
 
-  document.addEventListener("change", (e) => {
-    const row = e.target.closest("tr");
-    
-        if (row && row.dataset.zapisany !== "true") autoSave(row);
-  });
+  
 
-  document.addEventListener("blur", (e) => {
-    const row = e.target.closest("tr");
-    
-        if (row && row.dataset.zapisany !== "true") autoSave(row);
-  }, true);
+  
 </script>
+
+
+
 
 
 
@@ -435,15 +334,12 @@ document.addEventListener("blur", (e) => {
       stawka_km: input(10)
     };
 
-    // Policz ile pól nie jest pustych
-    const filledFields = Object.values(dane).filter(val => val !== "").length;
-
+    const filledFields = Object.values(dane).filter(val => val.trim() !== "").length;
     if (filledFields < 2) {
       console.log("⛔ Pominięto zapis – mniej niż 2 uzupełnione pola");
       return;
     }
 
-    // Jeśli mamy już zapisany ID → aktualizacja
     if (row.dataset.id) {
       const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
       if (error) {
