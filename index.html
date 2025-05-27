@@ -48,7 +48,7 @@
 <div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
   <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
   <div id="truck-widget-frame">
-    <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="160" frameborder="0" style="border:none; overflow:hidden;"></iframe>
+    <iframe id="truck-iframe" src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="160" frameborder="0" style="border:none; overflow:hidden;"></iframe>
   </div>
 </div>
 
@@ -361,13 +361,41 @@ async function zapiszWierszAutomatycznie(row) {
   }
 }
 
-document.addEventListener("input", (e) => {
+document.addEventListener("change", (e) => {
+  const row = e.target.closest("tr");
+  if (row && row.dataset.zapisany === "false") zapiszWierszAutomatycznie(row);
+});
+
+document.addEventListener("blur", (e) => {
+  const row = e.target.closest("tr");
+  if (row && row.dataset.zapisany === "false") zapiszWierszAutomatycznie(row);
+}, true);
+
+// poprzedni nasłuch:
   const row = e.target.closest("tr");
   if (row && row.dataset.zapisany === "false") {
     clearTimeout(row.autosaveTimeout);
     row.autosaveTimeout = setTimeout(() => zapiszWierszAutomatycznie(row), 1500);
   }
 });
+</script>
+
+
+<script>
+  // Przewiń zawartość iframe lekko w dół, by pominąć baner
+  document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.getElementById("truck-iframe");
+    iframe.onload = () => {
+      try {
+        const doc = iframe.contentWindow || iframe.contentDocument;
+        setTimeout(() => {
+          doc.scrollTo?.(0, 100); // scrolluje o 100px w dół
+        }, 100);
+      } catch (e) {
+        console.warn("Nie można przewinąć iframe (CORS)");
+      }
+    };
+  });
 </script>
 
 </body>
