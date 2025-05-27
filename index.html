@@ -74,40 +74,90 @@
 <div id="map" style="height: 500px; margin-top: 30px;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-<script>
 
-// Zapis danych do localStorage po każdej zmianie
-function zapiszDoLocalStorage() {
-  const dane = [];
-  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
-    const komorki = wiersz.querySelectorAll("td");
-    const rekord = Array.from(komorki).map(td => {
-      const input = td.querySelector("input, select, textarea");
-      return input ? input.value || input.checked : "";
-    });
-    dane.push(rekord);
+<script>
+// 🔁 Zapis automatyczny po każdej zmianie w polach
+function podlaczAutoZapis() {
+  document.querySelectorAll('#tabela input, #tabela select, #tabela textarea').forEach(el => {
+    el.addEventListener('change', () => zapiszDoSupabase());
+    el.addEventListener('input', () => zapiszDoSupabase());
   });
-  localStorage.setItem("platforma_zaladunku_dane", JSON.stringify(dane));
 }
 
-function wczytajZLocalStorage() {
-  const dane = JSON.parse(localStorage.getItem("platforma_zaladunku_dane"));
-  if (!dane) return;
+// 🔄 Uruchom po załadowaniu danych z Supabase
+window.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => podlaczAutoZapis(), 2000); // odczekaj aż dane się załadują i dopiero podłącz listener
+});
+
+// Supabase config
+const SUPABASE_URL = "https://bfknyzfmhojjghhkxyrv.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc";
+const supabaseHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`
+};
+
+async function zapiszDoSupabase() {
+  const dane = [];
+  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+    const cells = wiersz.querySelectorAll("td");
+    const rekord = {
+      zaladunek: cells[1].querySelector("input")?.value,
+      data_z: cells[2].querySelectorAll("input")[0]?.value,
+      data_do: cells[2].querySelectorAll("input")[1]?.value,
+      godzina_z: cells[3].querySelectorAll("input")[0]?.value,
+      godzina_do: cells[3].querySelectorAll("input")[1]?.value,
+      rozladunek: cells[4].querySelector("input")?.value,
+      sposob: cells[7].querySelector("select")?.value,
+      status: cells[8].querySelector("select")?.value,
+      uwagi: cells[9].querySelector("textarea")?.value,
+      stawka: parseFloat(cells[10].querySelector("input")?.value.replace(',', '.')),
+      km: parseFloat(cells[11].querySelector("input")?.value.replace(',', '.')),
+      stawka_z_km: parseFloat(cells[12].querySelector("input")?.value.replace(',', '.'))
+    };
+    dane.push(rekord);
+  });
+
+  
+  // Zapisz wszystkie nowe rekordy
+  for (const item of dane) {
+    await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
+      method: 'POST',
+      headers: supabaseHeaders,
+      body: JSON.stringify(item)
+    });
+  }
+}
+
+async function wczytajZSupabase() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, { headers: supabaseHeaders });
+  const dane = await res.json();
   dane.forEach(rekord => {
     dodajWiersz();
     const ostatni = document.querySelector("#tabela tbody tr:last-child");
-    const komorki = ostatni.querySelectorAll("td");
-    rekord.forEach((wartosc, i) => {
-      const input = komorki[i]?.querySelector("input, select, textarea");
-      if (!input) return;
-      if (input.type === "checkbox") input.checked = (wartosc === true || wartosc === "true");
-      else input.value = wartosc;
-    });
+    const cells = ostatni.querySelectorAll("td");
+    if (cells[1]) cells[1].querySelector("input").value = rekord.zaladunek || "";
+    if (cells[2]) {
+      cells[2].querySelectorAll("input")[0].value = rekord.data_z || "";
+      cells[2].querySelectorAll("input")[1].value = rekord.data_do || "";
+    }
+    if (cells[3]) {
+      cells[3].querySelectorAll("input")[0].value = rekord.godzina_z || "";
+      cells[3].querySelectorAll("input")[1].value = rekord.godzina_do || "";
+    }
+    if (cells[4]) cells[4].querySelector("input").value = rekord.rozladunek || "";
+    if (cells[7]) cells[7].querySelector("select").value = rekord.sposob || "";
+    if (cells[8]) cells[8].querySelector("select").value = rekord.status || "";
+    if (cells[9]) cells[9].querySelector("textarea").value = rekord.uwagi || "";
+    if (cells[10]) cells[10].querySelector("input").value = rekord.stawka || "";
+    if (cells[11]) cells[11].querySelector("input").value = rekord.km || "";
+    if (cells[12]) cells[12].querySelector("input").value = rekord.stawka_z_km || "";
   });
 }
 
-window.addEventListener("beforeunload", zapiszDoLocalStorage);
-window.addEventListener("DOMContentLoaded", wczytajZLocalStorage);
+window.addEventListener("beforeunload", zapiszDoSupabase);
+window.addEventListener("DOMContentLoaded", wczytajZSupabase);
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
   const button = document.querySelector("#truck-ban-widget button");
