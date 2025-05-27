@@ -142,8 +142,12 @@ async function zapiszDoSupabase() {
         body: JSON.stringify(rekord)
       });
       const inserted = await res.json();
+      console.log("📦 Supabase response (insert):", inserted);
       if (inserted && inserted[0] && inserted[0].id) {
         wiersz.setAttribute("data-id", inserted[0].id);
+        console.log("✅ Rekord zapisany z ID:", inserted[0].id);
+      } else {
+        console.warn("⚠️ Supabase NIE zwróciło ID!", inserted);
       }
     }
   }
