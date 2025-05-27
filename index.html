@@ -269,5 +269,57 @@ async function zapiszDane() {
 }
 </script>
 
+
+<script>
+window.addEventListener("DOMContentLoaded", async () => {
+  const { data, error } = await supabase.from("transport_data").select("*");
+  if (error) {
+    console.error("Błąd pobierania danych:", error.message);
+    return;
+  }
+
+  const tabela = document.querySelector("#tabela tbody");
+  if (!tabela || !data) return;
+
+  data.forEach(entry => {
+    const row = tabela.insertRow();
+    row.classList.add("pilne");
+    row.innerHTML = `
+      <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.rozladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
+      <td>
+        <select>
+          <option value="tyłem" ${entry.sposob_zaladunku === "tyłem" ? "selected" : ""}>Tyłem</option>
+          <option value="bokiem" ${entry.sposob_zaladunku === "bokiem" ? "selected" : ""}>Bokiem</option>
+          <option value="górą" ${entry.sposob_zaladunku === "górą" ? "selected" : ""}>Górą</option>
+          <option value="bok_góra" ${entry.sposob_zaladunku === "bok_góra" ? "selected" : ""}>Bok + Góra</option>
+          <option value="auto_winda" ${entry.sposob_zaladunku === "auto_winda" ? "selected" : ""}>Auto z windą</option>
+          <option value="inne" ${entry.sposob_zaladunku === "inne" ? "selected" : ""}>Inne</option>
+        </select>
+      </td>
+      <td>
+        <select onchange="zmienAktualnosc(this)">
+          <option value="">-- wybierz --</option>
+          <option value="aktualne" ${entry.aktualnosc === "aktualne" ? "selected" : ""}>Aktualne</option>
+          <option value="nieaktualne" ${entry.aktualnosc === "nieaktualne" ? "selected" : ""}>Nieaktualne</option>
+          <option value="nieznane" ${entry.aktualnosc === "nieznane" ? "selected" : ""}>???</option>
+        </select>
+      </td>
+      <td><textarea>${entry.uwagi || ''}</textarea></td>
+      <td><input type="text" value="${entry.stawka || ''}"></td>
+      <td><input type="text" value="${entry.kilometry || ''}"></td>
+      <td><input type="text" value="${entry.stawka_km || ''}"></td>
+      <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
+      <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
+    `;
+  });
+});
+</script>
+
 </body>
 </html>
