@@ -22,47 +22,35 @@ const supabase = supabase.createClient(
 
 async function autoSave(row) {
   if (!row || !row.cells || row.cells.length < 13) return;
-  const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value?.trim() || "";
 
   const dane = {
-    zaladunek: input(1),
-    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value.trim() || "",
-    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value.trim() || "",
-    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value.trim() || "",
-    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value.trim() || "",
-    rozladunek: input(4),
-    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value.trim() || "",
-    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value.trim() || "",
-    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value.trim() || "",
-    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value.trim() || "",
-    sposob_zaladunku: input(7),
-    aktualnosc: input(8),
-    uwagi: input(9),
-    stawka: input(10),
-    kilometry: input(11),
-    stawka_km: input(12)
+    zaladunek: row.cells[1].querySelector("input")?.value || "",
+    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value || "",
+    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value || "",
+    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value || "",
+    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value || "",
+    rozladunek: row.cells[4].querySelector("input")?.value || "",
+    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value || "",
+    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value || "",
+    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value || "",
+    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value || "",
+    sposob_zaladunku: row.cells[7].querySelector("select")?.value || "",
+    aktualnosc: row.cells[8].querySelector("select")?.value || "",
+    uwagi: row.cells[9].querySelector("textarea")?.value || "",
+    stawka: row.cells[10].querySelector("input")?.value || "",
+    kilometry: row.cells[11].querySelector("input")?.value || "",
+    stawka_km: row.cells[12].querySelector("input")?.value || ""
   };
-
-  const filled = Object.values(dane).filter(v => v !== "").length;
-  if (filled < 2) {
-    console.log("⛔ Pominięto zapis – mniej niż 2 pola");
-    return;
-  }
 
   if (row.dataset.id) {
     const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
-    if (error) {
-      console.error("❌ Błąd aktualizacji:", error.message);
-    } else {
-      console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
-    }
+    if (error) console.error("❌ Błąd aktualizacji:", error.message);
+    else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
   } else {
     const { data, error } = await supabase.from("translider").insert([dane]).select("id");
-    if (error) {
-      console.error("❌ Błąd zapisu:", error.message);
-    } else {
-      console.log("✅ Zapisano wiersz:", data[0]?.id);
-      row.dataset.zapisany = "true";
+    if (error) console.error("❌ Błąd zapisu:", error.message);
+    else {
+      console.log("✅ Zapisano nowy wiersz, ID:", data[0]?.id);
       row.dataset.id = data[0]?.id;
     }
   }
@@ -70,6 +58,8 @@ async function autoSave(row) {
 
 document.addEventListener("change", (e) => {
   const row = e.target.closest("tr");
+  if (row) autoSave(row);
+});
   if (row && row.dataset.zapisany !== "true") autoSave(row);
 });
 
@@ -356,40 +346,45 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   );
 
   async function autoSave(row) {
-  if (!row || !row.cells || row.cells.length < 13) { console.warn('⚠️ Pominięto niepełny wiersz'); return; }
   if (!row || !row.cells || row.cells.length < 13) return;
-    const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
 
-    const dane = {
-      zaladunek: input(1),
-      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
-      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
-      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
-      rozladunek: input(4),
-      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
-      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
-      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
-      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
-      sposob_zaladunku: input(7),
-      aktualnosc: input(8),
-      uwagi: input(9),
-      stawka: input(10),
-      kilometry: input(11),
-      stawka_km: input(12)
-    };
+  const dane = {
+    zaladunek: row.cells[1].querySelector("input")?.value || "",
+    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value || "",
+    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value || "",
+    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value || "",
+    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value || "",
+    rozladunek: row.cells[4].querySelector("input")?.value || "",
+    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value || "",
+    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value || "",
+    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value || "",
+    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value || "",
+    sposob_zaladunku: row.cells[7].querySelector("select")?.value || "",
+    aktualnosc: row.cells[8].querySelector("select")?.value || "",
+    uwagi: row.cells[9].querySelector("textarea")?.value || "",
+    stawka: row.cells[10].querySelector("input")?.value || "",
+    kilometry: row.cells[11].querySelector("input")?.value || "",
+    stawka_km: row.cells[12].querySelector("input")?.value || ""
+  };
 
-    const { error, data } = await supabase.from("translider").insert([dane]).select("id");
-    if (error) {
-      console.error("❌ Błąd zapisu:", error.message);
-    } else {
-      console.log("✅ Zapisano wiersz:", data[0]?.id);
-      row.dataset.zapisany = "true";
+  if (row.dataset.id) {
+    const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+    if (error) console.error("❌ Błąd aktualizacji:", error.message);
+    else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
+  } else {
+    const { data, error } = await supabase.from("translider").insert([dane]).select("id");
+    if (error) console.error("❌ Błąd zapisu:", error.message);
+    else {
+      console.log("✅ Zapisano nowy wiersz, ID:", data[0]?.id);
+      row.dataset.id = data[0]?.id;
     }
   }
+}
 
-  document.addEventListener("change", (e) => {
-    const row = e.target.closest("tr");
+document.addEventListener("change", (e) => {
+  const row = e.target.closest("tr");
+  if (row) autoSave(row);
+});
     if (row && row.dataset.zapisany !== "true") autoSave(row);
   });
 
