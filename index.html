@@ -11,9 +11,7 @@
   const saveTimeouts = new WeakMap();
 
   function debounceAutoSave(row) {
-    if (saveTimeouts.has(row)) {
-      clearTimeout(saveTimeouts.get(row));
-    }
+    if (saveTimeouts.has(row)) clearTimeout(saveTimeouts.get(row));
     const timeout = setTimeout(() => {
       if (row && row.dataset) autoSave(row);
     }, 1000);
@@ -45,40 +43,30 @@
     if (row.dataset.id) {
       const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
       if (error) console.error("❌ Błąd aktualizacji:", error.message);
-      else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
+      else console.log("🔁 Zaktualizowano:", row.dataset.id);
     } else {
       const { data, error } = await supabase.from("translider").insert([dane]).select("id");
-      if (error) {
-        console.error("❌ Błąd zapisu:", error.message);
-      } else {
-        const newId = data[0]?.id;
-        if (newId) {
-          row.dataset.id = newId;
-          console.log("✅ Zapisano nowy wiersz, ID:", newId);
-        }
+      if (error) console.error("❌ Błąd zapisu:", error.message);
+      else if (data?.[0]?.id) {
+        row.dataset.id = data[0].id;
+        console.log("✅ Zapisano, ID:", data[0].id);
       }
     }
   }
 
   async function wczytajDaneZSupabase() {
     const { data, error } = await supabase.from("translider").select("*");
-
-    if (error) {
-      console.error("❌ Błąd pobierania danych:", error.message);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      console.log("ℹ️ Brak danych do wyświetlenia.");
-      return;
-    }
+    if (error) return console.error("❌ Błąd pobierania danych:", error.message);
+    if (!data || data.length === 0) return;
 
     const tabela = document.querySelector("#tabela tbody");
     tabela.innerHTML = "";
 
     data.forEach(record => {
       const row = dodajWiersz();
-      row.dataset.id = record.id;
+      if (!row || !row.cells || row.cells.length < 13) return;
+
+      row.dataset.id = record.id || "";
 
       const wpisz = (i, val) => {
         const el = row.cells[i]?.querySelector("input, select, textarea");
