@@ -258,8 +258,13 @@ async function zapiszDane() {
       stawka_km: input(12),
     };
 
-    const { error } = await supabase.from("transport_data").insert([dane]);
+    const { error, data } = await supabase.from("translider").insert([dane]);
     if (error) {
+      console.error("❌ Błąd zapisu do Supabase:", error);
+      alert("❌ Błąd zapisu: " + error.message);
+    } else {
+      console.log("✅ Zapisano:", data);
+    }
       console.error("Błąd zapisu:", error.message);
       alert("❌ Błąd zapisu do bazy Supabase");
     }
@@ -272,8 +277,14 @@ async function zapiszDane() {
 
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
-  const { data, error } = await supabase.from("transport_data").select("*");
+  const { data, error } = await supabase.from("translider").select("*");
   if (error) {
+    console.error("❌ Błąd pobierania danych:", error);
+    alert("❌ Nie udało się pobrać danych z bazy: " + error.message);
+    return;
+  }
+
+  console.log("✅ Dane pobrane z Supabase:", data);
     console.error("Błąd pobierania danych:", error.message);
     return;
   }
