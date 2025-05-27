@@ -33,6 +33,15 @@
       border: none;
     }
   </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const supabase = supabase.createClient(
+    'https://bfknyzfmhojjghhkxyrv.supabase.co',
+    'TWÓJ_PUBLICZNY_ANON_KEY'
+  );
+</script>
+
 </head>
 <body>
 
@@ -45,6 +54,7 @@
 
 <h1>Platforma Załadunku i Rozładunku</h1>
 <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
+<button onclick="zapiszDane()">💾 Zapisz dane</button>
 <datalist id="lokalizacje"></datalist>
 
 <table id="tabela">
@@ -221,5 +231,43 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18
 }).addTo(map);
 </script>
+
+<script>
+async function zapiszDane() {
+  const rows = document.querySelectorAll("#tabela tbody tr");
+
+  for (const row of rows) {
+    const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
+
+    const dane = {
+      zaladunek: input(1),
+      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
+      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
+      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
+      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
+      rozladunek: input(4),
+      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
+      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
+      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
+      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
+      sposob_zaladunku: row.cells[7].querySelector("select").value,
+      aktualnosc: row.cells[8].querySelector("select").value,
+      uwagi: row.cells[9].querySelector("textarea").value,
+      stawka: input(10),
+      kilometry: input(11),
+      stawka_km: input(12),
+    };
+
+    const { error } = await supabase.from("transport_data").insert([dane]);
+    if (error) {
+      console.error("Błąd zapisu:", error.message);
+      alert("❌ Błąd zapisu do bazy Supabase");
+    }
+  }
+
+  alert("✅ Dane zostały zapisane do bazy Supabase");
+}
+</script>
+
 </body>
 </html>
