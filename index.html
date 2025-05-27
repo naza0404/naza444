@@ -36,15 +36,13 @@
 </head>
 <body>
 
-<div id="truck-ban-widget" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; background: white; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+<div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
   <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
   <div id="truck-widget-frame">
     <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
   </div>
 </div>
-</div>
 
-<div style="height: 340px;"></div>
 <h1>Platforma Załadunku i Rozładunku</h1>
 <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
 <datalist id="lokalizacje"></datalist>
@@ -74,185 +72,27 @@
 <div id="map" style="height: 500px; margin-top: 30px;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
 <script>
-window.addEventListener("DOMContentLoaded", async () => {
-  await wczytajZSupabase();
-  zaladujMiasta();
-  document.querySelector("#tabela tbody").addEventListener("input", (e) => {
-    const tr = e.target.closest("tr");
-    if (tr) zapiszWierszDoSupabase(tr);
-  });
-});
-// 🔁 Zapis automatyczny po każdej zmianie w polach
-function podlaczAutoZapis() {
-  document.querySelectorAll('#tabela tbody tr').forEach(wiersz => {
-    wiersz.querySelectorAll('input, select, textarea').forEach(el => {
-      el.addEventListener('change', () => zapiszWierszDoSupabase(wiersz));
-      el.addEventListener('input', () => zapiszWierszDoSupabase(wiersz));
-    });
-  });
-});
-}
-
-// 🔄 Uruchom po załadowaniu danych z Supabase
-
-
-// Supabase config
-const SUPABASE_URL = "https://bfknyzfmhojjghhkxyrv.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc";
-const supabaseHeaders = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`
-};
-
-async function zapiszWierszDoSupabase(wiersz) {
-  const cells = wiersz.querySelectorAll("td");
-  const rekord = {
-    zaladunek: cells[1].querySelector("input")?.value,
-    data_z: cells[2].querySelectorAll("input")[0]?.value,
-    data_do: cells[2].querySelectorAll("input")[1]?.value,
-    godzina_z: cells[3].querySelectorAll("input")[0]?.value,
-    godzina_do: cells[3].querySelectorAll("input")[1]?.value,
-    rozladunek: cells[4].querySelector("input")?.value,
-    sposob: cells[7].querySelector("select")?.value,
-    status: cells[8].querySelector("select")?.value,
-    uwagi: cells[9].querySelector("textarea")?.value,
-    stawka: parseFloat(cells[10].querySelector("input")?.value.replace(',', '.')),
-    km: parseFloat(cells[11].querySelector("input")?.value.replace(',', '.')),
-    stawka_z_km: parseFloat(cells[12].querySelector("input")?.value.replace(',', '.'))
-  };
-
-  const rekordId = wiersz.getAttribute("data-id");
-  if (rekordId) {
-    await fetch(`${SUPABASE_URL}/rest/v1/zaladunki?id=eq.${rekordId}`, {
-      method: 'PATCH',
-      headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
-      body: JSON.stringify(rekord)
-    });
-  } else {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
-      method: 'POST',
-      headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
-      body: JSON.stringify(rekord)
-    });
-    const inserted = await res.json();
-    console.log("📦 Supabase response (insert):", inserted);
-    if (inserted && inserted[0] && inserted[0].id) {
-      wiersz.setAttribute("data-id", inserted[0].id);
-      console.log("✅ Rekord zapisany z ID:", inserted[0].id);
-    } else {
-      console.warn("⚠️ Supabase NIE zwróciło ID!", inserted);
-    }
-  }
-};
-
-    const rekordId = wiersz.getAttribute("data-id");
-    if (rekordId) {
-      await fetch(`${SUPABASE_URL}/rest/v1/zaladunki?id=eq.${rekordId}`, {
-        method: 'PATCH',
-        headers: {
-        ...supabaseHeaders,
-        'Prefer': 'return=representation'
-      },
-        body: JSON.stringify(rekord)
-      });
-    } else {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
-        method: 'POST',
-        headers: {
-        ...supabaseHeaders,
-        'Prefer': 'return=representation'
-      },
-        body: JSON.stringify(rekord)
-      });
-      const inserted = await res.json();
-      console.log("📦 Supabase response (insert):", inserted);
-      if (inserted && inserted[0] && inserted[0].id) {
-        wiersz.setAttribute("data-id", inserted[0].id);
-        console.log("✅ Rekord zapisany z ID:", inserted[0].id);
-      } else {
-        console.warn("⚠️ Supabase NIE zwróciło ID!", inserted);
-      }
-    }
-  }
-}
-
-async function wczytajZSupabase() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, { headers: supabaseHeaders });
-  const dane = await res.json();
-  const tbody = document.querySelector("#tabela tbody");
-  tbody.innerHTML = "";
-  dane.forEach(rekord => {
-    dodajWiersz();
-    const ostatni = document.querySelector("#tabela tbody tr:last-child");
-    const cells = ostatni.querySelectorAll("td");
-    ostatni.setAttribute("data-id", rekord.id);
-    if (cells[1]) cells[1].querySelector("input").value = rekord.zaladunek || "";
-    if (cells[2]) {
-      cells[2].querySelectorAll("input")[0].value = rekord.data_z || "";
-      cells[2].querySelectorAll("input")[1].value = rekord.data_do || "";
-    }
-    if (cells[3]) {
-      cells[3].querySelectorAll("input")[0].value = rekord.godzina_z || "";
-      cells[3].querySelectorAll("input")[1].value = rekord.godzina_do || "";
-    }
-    if (cells[4]) cells[4].querySelector("input").value = rekord.rozladunek || "";
-    if (cells[7]) cells[7].querySelector("select").value = rekord.sposob || "";
-    if (cells[8]) cells[8].querySelector("select").value = rekord.status || "";
-    if (cells[9]) cells[9].querySelector("textarea").value = rekord.uwagi || "";
-    if (cells[10]) cells[10].querySelector("input").value = rekord.stawka || "";
-    if (cells[11]) cells[11].querySelector("input").value = rekord.km || "";
-    if (cells[12]) cells[12].querySelector("input").value = rekord.stawka_z_km || "";
-  });
-}
-    if (cells[3]) {
-      cells[3].querySelectorAll("input")[0].value = rekord.godzina_z || "";
-      cells[3].querySelectorAll("input")[1].value = rekord.godzina_do || "";
-    }
-    if (cells[4]) cells[4].querySelector("input").value = rekord.rozladunek || "";
-    if (cells[7]) cells[7].querySelector("select").value = rekord.sposob || "";
-    if (cells[8]) cells[8].querySelector("select").value = rekord.status || "";
-    if (cells[9]) cells[9].querySelector("textarea").value = rekord.uwagi || "";
-    if (cells[10]) cells[10].querySelector("input").value = rekord.stawka || "";
-    if (cells[11]) cells[11].querySelector("input").value = rekord.km || "";
-    if (cells[12]) cells[12].querySelector("input").value = rekord.stawka_z_km || "";
-  });
-}
-
-
-
 function toggleTruckWidget() {
   const frame = document.getElementById("truck-widget-frame");
-  const button = document.querySelector("#truck-ban-widget button");
-  const isHidden = frame.style.display === "none";
-  frame.style.display = isHidden ? "block" : "none";
-  button.textContent = isHidden ? "Ukryj zakazy ruchu" : "Pokaż zakazy ruchu";
+  frame.style.display = (frame.style.display === "none") ? "block" : "none";
 }
 
-function zaladujMiasta() {
+window.addEventListener('DOMContentLoaded', () => {
   fetch('kodypolska.json')
-    .then(response => {
-      if (!response.ok) throw new Error('Brak dostępu do pliku kodypolska.json');
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
       const datalist = document.getElementById("lokalizacje");
-      if (!datalist) return;
       datalist.innerHTML = "";
       data.forEach(entry => {
         const option = document.createElement("option");
         option.value = `${entry.place_name} ${entry.postal_code}`;
         datalist.appendChild(option);
       });
-      console.log("Załadowano miasta:", data.length);
     })
-    .catch(error => console.error("Błąd ładowania miejscowości:", error));
-}
-}
-
-
-    
+    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
+});
 </script>
 
 <script>
@@ -294,7 +134,6 @@ function dodajWiersz() {
     <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
     <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
   `;
-  zapiszWierszDoSupabase(wiersz);
 }
 
 function usunWiersz(button) {
