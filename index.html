@@ -34,9 +34,15 @@
     }
   </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 
+
+
+
+
+
+</head>
+<body>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
@@ -46,8 +52,6 @@
   );
 </script>
 
-</head>
-<body>
 
 <div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
   <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
@@ -226,7 +230,6 @@ if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = nu
         }
       });
   });
-}
 </script>
 <script>
 const map = L.map('map').setView([52.2297, 21.0122], 6);
