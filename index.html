@@ -231,7 +231,6 @@ function dodajWiersz() {
   if (!tabela) return;
   const wiersz = tabela.insertRow();
   wiersz.classList.add("pilne");
-  podlaczAutoZapis(); // 🔁 Podłącz zapis po dodaniu nowego wiersza
   wiersz.innerHTML = `
     <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
     <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
@@ -265,6 +264,7 @@ function dodajWiersz() {
     <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
     <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
   `;
+  podlaczAutoZapis();
 }
 
 function usunWiersz(button) {
