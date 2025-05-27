@@ -82,10 +82,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 // 🔁 Zapis automatyczny po każdej zmianie w polach
 function podlaczAutoZapis() {
-  document.querySelectorAll('#tabela input, #tabela select, #tabela textarea').forEach(el => {
-    el.addEventListener('change', () => zapiszDoSupabase());
-    el.addEventListener('input', () => zapiszDoSupabase());
+  document.querySelectorAll('#tabela tbody tr').forEach(wiersz => {
+    wiersz.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('change', () => zapiszWierszDoSupabase(wiersz));
+      el.addEventListener('input', () => zapiszWierszDoSupabase(wiersz));
+    });
   });
+});
 }
 
 // 🔄 Uruchom po załadowaniu danych z Supabase
@@ -102,25 +105,46 @@ const supabaseHeaders = {
   'Authorization': `Bearer ${SUPABASE_KEY}`
 };
 
-async function zapiszDoSupabase() {
-  const tabela = document.querySelector("#tabela tbody");
-  const wiersze = tabela.querySelectorAll("tr");
-  for (const wiersz of wiersze) {
-    const cells = wiersz.querySelectorAll("td");
-    const rekord = {
-      zaladunek: cells[1].querySelector("input")?.value,
-      data_z: cells[2].querySelectorAll("input")[0]?.value,
-      data_do: cells[2].querySelectorAll("input")[1]?.value,
-      godzina_z: cells[3].querySelectorAll("input")[0]?.value,
-      godzina_do: cells[3].querySelectorAll("input")[1]?.value,
-      rozladunek: cells[4].querySelector("input")?.value,
-      sposob: cells[7].querySelector("select")?.value,
-      status: cells[8].querySelector("select")?.value,
-      uwagi: cells[9].querySelector("textarea")?.value,
-      stawka: parseFloat(cells[10].querySelector("input")?.value.replace(',', '.')),
-      km: parseFloat(cells[11].querySelector("input")?.value.replace(',', '.')),
-      stawka_z_km: parseFloat(cells[12].querySelector("input")?.value.replace(',', '.'))
-    };
+async function zapiszWierszDoSupabase(wiersz) {
+  const cells = wiersz.querySelectorAll("td");
+  const rekord = {
+    zaladunek: cells[1].querySelector("input")?.value,
+    data_z: cells[2].querySelectorAll("input")[0]?.value,
+    data_do: cells[2].querySelectorAll("input")[1]?.value,
+    godzina_z: cells[3].querySelectorAll("input")[0]?.value,
+    godzina_do: cells[3].querySelectorAll("input")[1]?.value,
+    rozladunek: cells[4].querySelector("input")?.value,
+    sposob: cells[7].querySelector("select")?.value,
+    status: cells[8].querySelector("select")?.value,
+    uwagi: cells[9].querySelector("textarea")?.value,
+    stawka: parseFloat(cells[10].querySelector("input")?.value.replace(',', '.')),
+    km: parseFloat(cells[11].querySelector("input")?.value.replace(',', '.')),
+    stawka_z_km: parseFloat(cells[12].querySelector("input")?.value.replace(',', '.'))
+  };
+
+  const rekordId = wiersz.getAttribute("data-id");
+  if (rekordId) {
+    await fetch(`${SUPABASE_URL}/rest/v1/zaladunki?id=eq.${rekordId}`, {
+      method: 'PATCH',
+      headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify(rekord)
+    });
+  } else {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
+      method: 'POST',
+      headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify(rekord)
+    });
+    const inserted = await res.json();
+    console.log("📦 Supabase response (insert):", inserted);
+    if (inserted && inserted[0] && inserted[0].id) {
+      wiersz.setAttribute("data-id", inserted[0].id);
+      console.log("✅ Rekord zapisany z ID:", inserted[0].id);
+    } else {
+      console.warn("⚠️ Supabase NIE zwróciło ID!", inserted);
+    }
+  }
+};
 
     const rekordId = wiersz.getAttribute("data-id");
     if (rekordId) {
@@ -270,7 +294,7 @@ function dodajWiersz() {
     <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
   `;
   podlaczAutoZapis();
-  zapiszDoSupabase();
+  zapiszWierszDoSupabase(wiersz);
 }
 
 function usunWiersz(button) {
