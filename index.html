@@ -1,66 +1,54 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = window.supabase.createClient(
-    'https://bfknyzfmhojjghhkxyrv.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
-  );
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://bfknyzfmhojjghhkxyrv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
+    );
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    async function autoSave(row) {
+      if (!row || !row.cells || row.cells.length < 13) return;
 
+      const dane = {
+        zaladunek: row.cells[1].querySelector("input")?.value || "",
+        data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value || "",
+        data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value || "",
+        godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value || "",
+        godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value || "",
+        rozladunek: row.cells[4].querySelector("input")?.value || "",
+        data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value || "",
+        data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value || "",
+        godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value || "",
+        godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value || "",
+        sposob_zaladunku: row.cells[7].querySelector("select")?.value || "",
+        aktualnosc: row.cells[8].querySelector("select")?.value || "",
+        uwagi: row.cells[9].querySelector("textarea")?.value || "",
+        stawka: row.cells[10].querySelector("input")?.value || "",
+        kilometry: row.cells[11].querySelector("input")?.value || "",
+        stawka_km: row.cells[12].querySelector("input")?.value || ""
+      };
 
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-const supabase = supabase.createClient(
-  'https://bfknyzfmhojjghhkxyrv.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
-);
-
-async function autoSave(row) {
-  if (!row || !row.cells || row.cells.length < 13) return;
-
-  const dane = {
-    zaladunek: row.cells[1].querySelector("input")?.value || "",
-    data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value || "",
-    data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value || "",
-    godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value || "",
-    godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value || "",
-    rozladunek: row.cells[4].querySelector("input")?.value || "",
-    data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value || "",
-    data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value || "",
-    godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value || "",
-    godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value || "",
-    sposob_zaladunku: row.cells[7].querySelector("select")?.value || "",
-    aktualnosc: row.cells[8].querySelector("select")?.value || "",
-    uwagi: row.cells[9].querySelector("textarea")?.value || "",
-    stawka: row.cells[10].querySelector("input")?.value || "",
-    kilometry: row.cells[11].querySelector("input")?.value || "",
-    stawka_km: row.cells[12].querySelector("input")?.value || ""
-  };
-
-  if (row.dataset.id) {
-    const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
-    if (error) console.error("❌ Błąd aktualizacji:", error.message);
-    else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
-  } else {
-    const { data, error } = await supabase.from("translider").insert([dane]).select("id");
-    if (error) console.error("❌ Błąd zapisu:", error.message);
-    else {
-      console.log("✅ Zapisano nowy wiersz, ID:", data[0]?.id);
-      row.dataset.id = data[0]?.id;
+      if (row.dataset.id) {
+        const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+        if (error) console.error("❌ Błąd aktualizacji:", error.message);
+        else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
+      } else {
+        const { data, error } = await supabase.from("translider").insert([dane]).select("id");
+        if (error) console.error("❌ Błąd zapisu:", error.message);
+        else {
+          console.log("✅ Zapisano nowy wiersz, ID:", data[0]?.id);
+          row.dataset.id = data[0]?.id;
+        }
+      }
     }
-  }
-}
 
-document.addEventListener("change", (e) => {
-  const row = e.target.closest("tr");
-  if (row) autoSave(row);
-});
-  if (row && row.dataset.zapisany !== "true") autoSave(row);
+    document.addEventListener("change", (e) => {
+      const row = e.target.closest("tr");
+      if (row) autoSave(row);
+    });
+  </script>
 });
 
 document.addEventListener("blur", (e) => {
