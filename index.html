@@ -53,6 +53,7 @@
 </div>
 
 <h1>Platforma Załadunku i Rozładunku</h1>
+<button onclick="zapiszDane()">💾 Zapisz dane do Supabase</button>
 <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
 <datalist id="lokalizacje"></datalist>
 
@@ -237,6 +238,7 @@ async function zapiszDane() {
   for (const row of rows) {
     const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
 
+    console.log('⏳ Próba zapisu danych do Supabase');
     const dane = {
       zaladunek: input(1),
       data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
@@ -256,15 +258,14 @@ async function zapiszDane() {
       stawka_km: input(12),
     };
 
-  const { error } = await client.from("translider").insert([dane]);
-if (error) {
-  console.error("❌ Błąd zapisu:", error.message);
-  alert("❌ Błąd zapisu: " + error.message);
-} else {
-  console.log("✅ Zapisano dane:", dane);
+    const { error } = await client.from("translider").insert([dane]);
+    if (error) {
+      console.error("❌ Błąd zapisu:", error.message);
+      alert("❌ Błąd zapisu: " + error.message);
+    }
+  }
   alert("✅ Dane zapisane!");
 }
-
 
 window.addEventListener("DOMContentLoaded", async () => {
   const { data, error } = await client.from("translider").select("*");
