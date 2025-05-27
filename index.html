@@ -265,9 +265,7 @@ async function zapiszWierszAutomatycznie(row) {
   } else {
     console.log("✅ Autozapisano nowy wiersz do Supabase");
     row.dataset.zapisany = "true";
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = '✅';
-    row.dataset.id = data[0]?.id;
+                row.dataset.id = data[0]?.id;
   }
 }
 
@@ -340,9 +338,7 @@ async function zapiszWierszAutomatycznie(row) {
   } else {
     console.log("✅ Autozapisano nowy wiersz do Supabase");
     row.dataset.zapisany = "true";
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = '✅';
-    row.dataset.id = data[0]?.id;
+                row.dataset.id = data[0]?.id;
   }
 }
 
@@ -390,30 +386,22 @@ document.addEventListener("blur", (e) => {
     const { error, data } = await supabase.from("translider").insert([dane]).select("id");
     if (error) {
       console.error("❌ Błąd zapisu:", error.message);
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = '❌';
-    } else {
+                } else {
       console.log("✅ Zapisano wiersz:", data[0]?.id);
       row.dataset.zapisany = "true";
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = '✅';
-    }
+                }
   }
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
     
-    const statusCell = row.querySelector('.status');
-    if (statusCell) statusCell.textContent = "⏳";
-if (row && row.dataset.zapisany !== "true") autoSave(row);
+        if (row && row.dataset.zapisany !== "true") autoSave(row);
   });
 
   document.addEventListener("blur", (e) => {
     const row = e.target.closest("tr");
     
-    const statusCell = row.querySelector('.status');
-    if (statusCell) statusCell.textContent = "⏳";
-if (row && row.dataset.zapisany !== "true") autoSave(row);
+        if (row && row.dataset.zapisany !== "true") autoSave(row);
   }, true);
 </script>
 
@@ -442,32 +430,25 @@ if (row && row.dataset.zapisany !== "true") autoSave(row);
     };
 
     const { error, data } = await supabase.from("translider").insert([dane]).select("id");
-    const statusCell = row.querySelector('.status');
-    if (error) {
+        if (error) {
       console.error("❌ Błąd zapisu:", error.message);
-      if (statusCell) statusCell.textContent = "❌";
-    } else {
+          } else {
       console.log("✅ Zapisano wiersz:", data[0]?.id);
       row.dataset.zapisany = "true";
-      if (statusCell) statusCell.textContent = "✅";
-    }
+          }
   }
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
     if (row) {
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = "⏳";
-      if (row.dataset.zapisany !== "true") autoSave(row);
+                  if (row.dataset.zapisany !== "true") autoSave(row);
     }
   });
 
   document.addEventListener("blur", (e) => {
     const row = e.target.closest("tr");
     if (row) {
-      const statusCell = row.querySelector('.status');
-      if (statusCell) statusCell.textContent = "⏳";
-      if (row.dataset.zapisany !== "true") autoSave(row);
+                  if (row.dataset.zapisany !== "true") autoSave(row);
     }
   }, true);
 </script>
