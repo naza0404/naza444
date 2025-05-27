@@ -99,8 +99,9 @@ const supabaseHeaders = {
 };
 
 async function zapiszDoSupabase() {
-  const dane = [];
-  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+  const tabela = document.querySelector("#tabela tbody");
+  const wiersze = tabela.querySelectorAll("tr");
+  for (const wiersz of wiersze) {
     const cells = wiersz.querySelectorAll("td");
     const rekord = {
       zaladunek: cells[1].querySelector("input")?.value,
@@ -116,32 +117,56 @@ async function zapiszDoSupabase() {
       km: parseFloat(cells[11].querySelector("input")?.value.replace(',', '.')),
       stawka_z_km: parseFloat(cells[12].querySelector("input")?.value.replace(',', '.'))
     };
-    dane.push(rekord);
-  });
 
-  
-  // Zapisz wszystkie nowe rekordy
-  for (const item of dane) {
-    await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
-      method: 'POST',
-      headers: supabaseHeaders,
-      body: JSON.stringify(item)
-    });
+    const rekordId = wiersz.getAttribute("data-id");
+    if (rekordId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/zaladunki?id=eq.${rekordId}`, {
+        method: 'PATCH',
+        headers: supabaseHeaders,
+        body: JSON.stringify(rekord)
+      });
+    } else {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, {
+        method: 'POST',
+        headers: supabaseHeaders,
+        body: JSON.stringify(rekord)
+      });
+      const inserted = await res.json();
+      if (inserted && inserted[0] && inserted[0].id) {
+        wiersz.setAttribute("data-id", inserted[0].id);
+      }
+    }
   }
 }
 
 async function wczytajZSupabase() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/zaladunki`, { headers: supabaseHeaders });
   const dane = await res.json();
+  const tbody = document.querySelector("#tabela tbody");
+  tbody.innerHTML = "";
   dane.forEach(rekord => {
     dodajWiersz();
     const ostatni = document.querySelector("#tabela tbody tr:last-child");
     const cells = ostatni.querySelectorAll("td");
+    ostatni.setAttribute("data-id", rekord.id);
     if (cells[1]) cells[1].querySelector("input").value = rekord.zaladunek || "";
     if (cells[2]) {
       cells[2].querySelectorAll("input")[0].value = rekord.data_z || "";
       cells[2].querySelectorAll("input")[1].value = rekord.data_do || "";
     }
+    if (cells[3]) {
+      cells[3].querySelectorAll("input")[0].value = rekord.godzina_z || "";
+      cells[3].querySelectorAll("input")[1].value = rekord.godzina_do || "";
+    }
+    if (cells[4]) cells[4].querySelector("input").value = rekord.rozladunek || "";
+    if (cells[7]) cells[7].querySelector("select").value = rekord.sposob || "";
+    if (cells[8]) cells[8].querySelector("select").value = rekord.status || "";
+    if (cells[9]) cells[9].querySelector("textarea").value = rekord.uwagi || "";
+    if (cells[10]) cells[10].querySelector("input").value = rekord.stawka || "";
+    if (cells[11]) cells[11].querySelector("input").value = rekord.km || "";
+    if (cells[12]) cells[12].querySelector("input").value = rekord.stawka_z_km || "";
+  });
+}
     if (cells[3]) {
       cells[3].querySelectorAll("input")[0].value = rekord.godzina_z || "";
       cells[3].querySelectorAll("input")[1].value = rekord.godzina_do || "";
