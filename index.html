@@ -8,6 +8,18 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
   );
 
+  const saveTimeouts = new WeakMap();
+
+  function debounceAutoSave(row) {
+    if (saveTimeouts.has(row)) {
+      clearTimeout(saveTimeouts.get(row));
+    }
+    const timeout = setTimeout(() => {
+      if (row && row.dataset) autoSave(row);
+    }, 1000);
+    saveTimeouts.set(row, timeout);
+  }
+
   async function autoSave(row) {
     if (!row || !row.cells || row.cells.length < 13) return;
 
@@ -36,10 +48,14 @@
       else console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
     } else {
       const { data, error } = await supabase.from("translider").insert([dane]).select("id");
-      if (error) console.error("❌ Błąd zapisu:", error.message);
-      else {
-        console.log("✅ Zapisano nowy wiersz, ID:", data[0]?.id);
-        row.dataset.id = data[0]?.id;
+      if (error) {
+        console.error("❌ Błąd zapisu:", error.message);
+      } else {
+        const newId = data[0]?.id;
+        if (newId) {
+          row.dataset.id = newId;
+          console.log("✅ Zapisano nowy wiersz, ID:", newId);
+        }
       }
     }
   }
@@ -87,7 +103,7 @@
       wpisz(12, record.stawka_km);
 
       const statusSelect = row.cells[8].querySelector("select");
-      if (statusSelect) zmienAktualnosc(statusSelect);
+      if (statusSelect && typeof zmienAktualnosc === "function") zmienAktualnosc(statusSelect);
     });
   }
 
@@ -95,9 +111,9 @@
     wczytajDaneZSupabase();
   });
 
-  document.addEventListener("change", (e) => {
+  document.addEventListener("input", (e) => {
     const row = e.target.closest("tr");
-    if (row && row.dataset) autoSave(row);
+    if (row) debounceAutoSave(row);
   });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
