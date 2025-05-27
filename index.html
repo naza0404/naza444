@@ -56,8 +56,16 @@
 
   async function wczytajDaneZSupabase() {
     const { data, error } = await supabase.from("translider").select("*");
-    if (error) return console.error("❌ Błąd pobierania danych:", error.message);
-    if (!data || data.length === 0) return;
+    if (error) {
+      console.error("❌ Błąd pobierania danych:", error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      console.warn("⚠️ Brak danych do załadowania");
+      return;
+    }
+
+    console.log("📥 Dane z Supabase:", data);
 
     const tabela = document.querySelector("#tabela tbody");
     tabela.innerHTML = "";
