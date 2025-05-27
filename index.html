@@ -77,7 +77,7 @@
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
   await wczytajZSupabase();
-  podlaczAutoZapis();
+  setTimeout(() => podlaczAutoZapis(), 1000);
   zaladujMiasta();
 });
 // 🔁 Zapis automatyczny po każdej zmianie w polach
@@ -92,9 +92,7 @@ function podlaczAutoZapis() {
 }
 
 // 🔄 Uruchom po załadowaniu danych z Supabase
-window.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => podlaczAutoZapis(), 2000); // odczekaj aż dane się załadują i dopiero podłącz listener
-});
+
 
 // Supabase config
 const SUPABASE_URL = "https://bfknyzfmhojjghhkxyrv.supabase.co";
