@@ -279,6 +279,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   data.forEach(entry => {
     const row = tabela.insertRow();
     row.classList.add("pilne");
+    row.dataset.id = entry.id;
     row.innerHTML = `
       <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
       <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
@@ -294,10 +295,33 @@ window.addEventListener("DOMContentLoaded", async () => {
       <td><input type="text" value="${entry.kilometry || ''}"></td>
       <td><input type="text" value="${entry.stawka_km || ''}"></td>
       <td><input type="checkbox"></td>
-      <td><button onclick="this.closest('tr').remove()">🗑️ Usuń</button></td>
+      <td><button onclick="usunZBazy(this)">🗑️ Usuń</button></td>
     `;
   });
 });
+</script>
+
+
+<script>
+async function usunZBazy(btn) {
+  if (!confirm("Czy na pewno chcesz usunąć ten wiersz również z bazy Supabase?")) return;
+
+  const row = btn.closest("tr");
+  const id = row.dataset.id;
+  if (!id) {
+    alert('❌ Brak ID rekordu, nie można usunąć z bazy.');
+    return;
+  }
+  const { error } = await client.from("translider").delete().eq("id", id);
+
+  if (error) {
+    alert("❌ Błąd podczas usuwania z Supabase: " + error.message);
+    console.error("Błąd usuwania:", error);
+  } else {
+    alert("✅ Wiersz usunięty z bazy i tabeli");
+    row.remove();
+  }
+}
 </script>
 
 </body>
