@@ -33,6 +33,15 @@
       border: none;
     }
   </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const client = window.supabase.createClient(
+    'https://bfknyzfmhojjghhkxyrv.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
+  );
+</script>
+
 </head>
 <body>
 
@@ -221,5 +230,73 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18
 }).addTo(map);
 </script>
+
+<script>
+async function zapiszDane() {
+  const rows = document.querySelectorAll("#tabela tbody tr");
+  for (const row of rows) {
+    const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
+
+    const dane = {
+      zaladunek: input(1),
+      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
+      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
+      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
+      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
+      rozladunek: input(4),
+      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
+      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
+      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
+      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
+      sposob_zaladunku: input(7),
+      aktualnosc: input(8),
+      uwagi: input(9),
+      stawka: input(10),
+      kilometry: input(11),
+      stawka_km: input(12),
+    };
+
+    const { error } = await client.from("translider").insert([dane]);
+    if (error) {
+      console.error("❌ Błąd zapisu:", error.message);
+      alert("❌ Błąd zapisu: " + error.message);
+    }
+  }
+  alert("✅ Dane zapisane!");
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const { data, error } = await client.from("translider").select("*");
+  if (error) {
+    console.error("❌ Błąd odczytu:", error.message);
+    alert("❌ Błąd odczytu z bazy Supabase: " + error.message);
+    return;
+  }
+
+  const tabela = document.querySelector("#tabela tbody");
+  data.forEach(entry => {
+    const row = tabela.insertRow();
+    row.classList.add("pilne");
+    row.innerHTML = `
+      <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.rozladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
+      <td><select><option>${entry.sposob_zaladunku || ''}</option></select></td>
+      <td><select><option>${entry.aktualnosc || ''}</option></select></td>
+      <td><textarea>${entry.uwagi || ''}</textarea></td>
+      <td><input type="text" value="${entry.stawka || ''}"></td>
+      <td><input type="text" value="${entry.kilometry || ''}"></td>
+      <td><input type="text" value="${entry.stawka_km || ''}"></td>
+      <td><input type="checkbox"></td>
+      <td><button onclick="this.closest('tr').remove()">🗑️ Usuń</button></td>
+    `;
+  });
+});
+</script>
+
 </body>
 </html>
