@@ -77,8 +77,11 @@
 <script>
 window.addEventListener("DOMContentLoaded", async () => {
   await wczytajZSupabase();
-  setTimeout(() => podlaczAutoZapis(), 1000);
   zaladujMiasta();
+  document.querySelector("#tabela tbody").addEventListener("input", (e) => {
+    const tr = e.target.closest("tr");
+    if (tr) zapiszWierszDoSupabase(tr);
+  });
 });
 // 🔁 Zapis automatyczny po każdej zmianie w polach
 function podlaczAutoZapis() {
@@ -291,7 +294,6 @@ function dodajWiersz() {
     <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
     <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
   `;
-  podlaczAutoZapis();
   zapiszWierszDoSupabase(wiersz);
 }
 
