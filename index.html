@@ -44,6 +44,57 @@
     }
   }
 
+  async function wczytajDaneZSupabase() {
+    const { data, error } = await supabase.from("translider").select("*");
+
+    if (error) {
+      console.error("❌ Błąd pobierania danych:", error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.log("ℹ️ Brak danych do wyświetlenia.");
+      return;
+    }
+
+    const tabela = document.querySelector("#tabela tbody");
+    tabela.innerHTML = "";
+
+    data.forEach(record => {
+      const row = dodajWiersz();
+      row.dataset.id = record.id;
+
+      const wpisz = (i, val) => {
+        const el = row.cells[i]?.querySelector("input, select, textarea");
+        if (el) el.value = val || "";
+      };
+
+      wpisz(1, record.zaladunek);
+      row.cells[2].querySelectorAll("input")[0].value = record.data_zaladunku_od || "";
+      row.cells[2].querySelectorAll("input")[1].value = record.data_zaladunku_do || "";
+      row.cells[3].querySelectorAll("input")[0].value = record.godzina_zaladunku_od || "";
+      row.cells[3].querySelectorAll("input")[1].value = record.godzina_zaladunku_do || "";
+      wpisz(4, record.rozladunek);
+      row.cells[5].querySelectorAll("input")[0].value = record.data_rozladunku_od || "";
+      row.cells[5].querySelectorAll("input")[1].value = record.data_rozladunku_do || "";
+      row.cells[6].querySelectorAll("input")[0].value = record.godzina_rozladunku_od || "";
+      row.cells[6].querySelectorAll("input")[1].value = record.godzina_rozladunku_do || "";
+      row.cells[7].querySelector("select").value = record.sposob_zaladunku || "";
+      row.cells[8].querySelector("select").value = record.aktualnosc || "";
+      row.cells[9].querySelector("textarea").value = record.uwagi || "";
+      wpisz(10, record.stawka);
+      wpisz(11, record.kilometry);
+      wpisz(12, record.stawka_km);
+
+      const statusSelect = row.cells[8].querySelector("select");
+      if (statusSelect) zmienAktualnosc(statusSelect);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    wczytajDaneZSupabase();
+  });
+
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
     if (row) autoSave(row);
