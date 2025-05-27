@@ -63,6 +63,8 @@
     tabela.innerHTML = "";
 
     data.forEach(record => {
+      if (!record || Object.keys(record).length === 0) return;
+
       const row = dodajWiersz();
       if (!row || !row.cells || row.cells.length < 13) return;
 
