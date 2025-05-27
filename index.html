@@ -307,7 +307,7 @@ async function usunZBazy(btn) {
   if (!confirm("Czy na pewno chcesz usunąć ten wiersz również z bazy Supabase?")) return;
 
   const row = btn.closest("tr");
-  const id = row.dataset.id;
+  const id = parseInt(row.dataset.id, 10);
   if (!id) {
     alert('❌ Brak ID rekordu, nie można usunąć z bazy.');
     return;
