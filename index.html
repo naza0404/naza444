@@ -409,25 +409,20 @@ document.addEventListener("blur", (e) => {
 
 
 
+
+
+
 <script>
   async function autoSave(row) {
     const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
 
-    // Wymagane pola
-    const zaladunek = input(0);
-    const rozladunek = input(4);
-    if (!zaladunek || !rozladunek) {
-      console.log("⛔ Pominięto zapis – brak wymaganych pól");
-      return;
-    }
-
     const dane = {
-      zaladunek: zaladunek,
+      zaladunek: input(0),
       data_zaladunku_od: row.cells[1].querySelectorAll("input")[0].value,
       data_zaladunku_do: row.cells[1].querySelectorAll("input")[1].value,
       godzina_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
       godzina_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-      rozladunek: rozladunek,
+      rozladunek: input(4),
       data_rozladunku_od: row.cells[3].querySelectorAll("input")[0].value,
       data_rozladunku_do: row.cells[3].querySelectorAll("input")[1].value,
       godzina_rozladunku_od: row.cells[4].querySelectorAll("input")[0].value,
@@ -440,23 +435,42 @@ document.addEventListener("blur", (e) => {
       stawka_km: input(10)
     };
 
-    const { error, data } = await supabase.from("translider").insert([dane]).select("id");
-    if (error) {
-      console.error("❌ Błąd zapisu:", error.message);
+    // Policz ile pól nie jest pustych
+    const filledFields = Object.values(dane).filter(val => val !== "").length;
+
+    if (filledFields < 2) {
+      console.log("⛔ Pominięto zapis – mniej niż 2 uzupełnione pola");
+      return;
+    }
+
+    // Jeśli mamy już zapisany ID → aktualizacja
+    if (row.dataset.id) {
+      const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+      if (error) {
+        console.error("❌ Błąd aktualizacji:", error.message);
+      } else {
+        console.log("🔁 Zaktualizowano wiersz ID:", row.dataset.id);
+      }
     } else {
-      console.log("✅ Zapisano wiersz:", data[0]?.id);
-      row.dataset.zapisany = "true";
+      const { error, data } = await supabase.from("translider").insert([dane]).select("id");
+      if (error) {
+        console.error("❌ Błąd zapisu:", error.message);
+      } else {
+        console.log("✅ Zapisano nowy wiersz:", data[0]?.id);
+        row.dataset.zapisany = "true";
+        row.dataset.id = data[0]?.id;
+      }
     }
   }
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
-    if (row && row.dataset.zapisany !== "true") autoSave(row);
+    if (row) autoSave(row);
   });
 
   document.addEventListener("blur", (e) => {
     const row = e.target.closest("tr");
-    if (row && row.dataset.zapisany !== "true") autoSave(row);
+    if (row) autoSave(row);
   }, true);
 </script>
 
