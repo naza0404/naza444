@@ -406,50 +406,57 @@ document.addEventListener("blur", (e) => {
 </script>
 
 
+
+
+
 <script>
   async function autoSave(row) {
     const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
 
+    // Wymagane pola
+    const zaladunek = input(0);
+    const rozladunek = input(4);
+    if (!zaladunek || !rozladunek) {
+      console.log("⛔ Pominięto zapis – brak wymaganych pól");
+      return;
+    }
+
     const dane = {
-      zaladunek: input(1),
-      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
-      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
-      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
-      rozladunek: input(4),
-      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
-      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
-      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
-      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
-      sposob_zaladunku: input(7),
-      aktualnosc: input(8),
-      uwagi: input(9),
-      stawka: input(10),
-      kilometry: input(11),
-      stawka_km: input(12)
+      zaladunek: zaladunek,
+      data_zaladunku_od: row.cells[1].querySelectorAll("input")[0].value,
+      data_zaladunku_do: row.cells[1].querySelectorAll("input")[1].value,
+      godzina_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
+      godzina_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
+      rozladunek: rozladunek,
+      data_rozladunku_od: row.cells[3].querySelectorAll("input")[0].value,
+      data_rozladunku_do: row.cells[3].querySelectorAll("input")[1].value,
+      godzina_rozladunku_od: row.cells[4].querySelectorAll("input")[0].value,
+      godzina_rozladunku_do: row.cells[4].querySelectorAll("input")[1].value,
+      sposob_zaladunku: input(5),
+      aktualnosc: input(6),
+      uwagi: input(7),
+      stawka: input(8),
+      kilometry: input(9),
+      stawka_km: input(10)
     };
 
     const { error, data } = await supabase.from("translider").insert([dane]).select("id");
-        if (error) {
+    if (error) {
       console.error("❌ Błąd zapisu:", error.message);
-          } else {
+    } else {
       console.log("✅ Zapisano wiersz:", data[0]?.id);
       row.dataset.zapisany = "true";
-          }
+    }
   }
 
   document.addEventListener("change", (e) => {
     const row = e.target.closest("tr");
-    if (row) {
-                  if (row.dataset.zapisany !== "true") autoSave(row);
-    }
+    if (row && row.dataset.zapisany !== "true") autoSave(row);
   });
 
   document.addEventListener("blur", (e) => {
     const row = e.target.closest("tr");
-    if (row) {
-                  if (row.dataset.zapisany !== "true") autoSave(row);
-    }
+    if (row && row.dataset.zapisany !== "true") autoSave(row);
   }, true);
 </script>
 
