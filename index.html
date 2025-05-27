@@ -1,6 +1,65 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <!-- Supabase client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabase = supabase.createClient('https://bfknyzfmhojjghhkxyrv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc');
+    async function autoSave(row) {
+      if (!row || !row.cells || row.cells.length < 13) return;
+      const totalRows = document.querySelectorAll("#tabela tbody tr").length;
+      if (totalRows < 2) {
+        console.log("⛔ Pominięto zapis – mniej niż 2 wiersze");
+        return;
+      }
+      const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value.trim() || "";
+      const dane = {
+        zaladunek: input(1),
+        data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value.trim() || "",
+        data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value.trim() || "",
+        rozladunek: input(4),
+        data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value.trim() || "",
+        data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value.trim() || "",
+        sposob_zaladunku: input(7),
+        aktualnosc: input(8),
+        uwagi: input(9),
+        stawka: input(10),
+        kilometry: input(11),
+        stawka_km: input(12)
+      };
+      const filled = Object.values(dane).filter(v => v !== "").length;
+      if (!row.dataset.id && filled < 2) {
+        console.log("⛔ Pominięto zapis – mniej niż 2 pola");
+        return;
+      }
+      if (row.dataset.id) {
+        const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+        if (error) {
+          console.error("❌ Błąd aktualizacji:", error.message);
+        } else {
+          console.log("🔁 Zaktualizowano wiersz:", row.dataset.id);
+        }
+      } else {
+        const { data, error } = await supabase.from("translider").insert([dane]).select("id");
+        if (error) {
+          console.error("❌ Błąd zapisu:", error.message);
+        } else {
+          console.log("✅ Zapisano wiersz:", data[0]?.id);
+          row.dataset.id = data[0]?.id;
+        }
+      }
+    }
+    document.addEventListener("change", (e) => {
+      const row = e.target.closest("tr");
+      if (row) {
+        autoSave(row);
+      }
+    });
+  </script>
   <meta charset="UTF-8">
   <title>Platforma Załadunku i Rozładunku</title>
   <style>
@@ -33,272 +92,245 @@
       border: none;
     }
   </style>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const client = window.supabase.createClient(
-    'https://bfknyzfmhojjghhkxyrv.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
-  );
-</script>
-
 </head>
 <body>
-
-<div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
-  <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
-  <div id="truck-widget-frame">
-    <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
+  <div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
+    <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
+    <div id="truck-widget-frame">
+      <iframe id="truck-iframe" src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="160" frameborder="0" style="border:none; overflow:hidden;"></iframe>
+    </div>
   </div>
-</div>
 
-<h1>Platforma Załadunku i Rozładunku</h1>
-<button onclick="zapiszDane()">💾 Zapisz dane do Supabase</button>
-<button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
-<datalist id="lokalizacje"></datalist>
+  <h1>Platforma Załadunku i Rozładunku</h1>
+  <button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
+  <datalist id="lokalizacje"></datalist>
 
-<table id="tabela">
-  <thead>
-    <tr>
-      <th>PILNE</th>
-      <th>Załadunek</th>
-      <th>Data załadunku (od-do)</th>
-      <th>Godzina załadunku (od-do)</th>
-      <th>Rozładunek</th>
-      <th>Data rozładunku (od-do)</th>
-      <th>Godzina rozładunku (od-do)</th>
-      <th>Sposób załadunku</th>
-      <th>Potwierdź aktualność</th>
-      <th>Uwagi</th>
-      <th>Stawka</th>
-      <th>Kilometry</th>
-      <th>Stawka z km</th>
-      <th>Mapka</th>
-      <th>Akcje</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-<div id="map" style="height: 500px; margin-top: 30px;"></div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>PILNE</th>
+        <th>Załadunek</th>
+        <th>Data załadunku (od-do)</th>
+        <th>Godzina załadunku (od-do)</th>
+        <th>Rozładunek</th>
+        <th>Data rozładunku (od-do)</th>
+        <th>Godzina rozładunku (od-do)</th>
+        <th>Sposób załadunku</th>
+        <th>Potwierdź aktualność</th>
+        <th>Uwagi</th>
+        <th>Stawka</th>
+        <th>Kilometry</th>
+        <th>Stawka z km</th>
+        <th>Mapka</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="map" style="height: 500px; margin-top: 30px;"></div>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
-<script>
-function toggleTruckWidget() {
-  const frame = document.getElementById("truck-widget-frame");
-  frame.style.display = (frame.style.display === "none") ? "block" : "none";
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  fetch('kodypolska.json')
-    .then(response => response.json())
-    .then(data => {
-      const datalist = document.getElementById("lokalizacje");
-      datalist.innerHTML = "";
-      data.forEach(entry => {
-        const option = document.createElement("option");
-        option.value = `${entry.place_name} ${entry.postal_code}`;
-        datalist.appendChild(option);
-      });
-    })
-    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
-});
-</script>
-
-<script>
-function dodajWiersz() {
-  const tabela = document.querySelector("#tabela tbody");
-  if (!tabela) return;
-  const wiersz = tabela.insertRow();
-  wiersz.classList.add("pilne");
-  wiersz.innerHTML = `
-    <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
-    <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
-    <td class="date-time-group"><input type="date"> <input type="date"></td>
-    <td class="date-time-group"><input type="time"> <input type="time"></td>
-    <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
-    <td class="date-time-group"><input type="date"> <input type="date"></td>
-    <td class="date-time-group"><input type="time"> <input type="time"></td>
-    <td>
-      <select>
-        <option value="tyłem">Tyłem</option>
-        <option value="bokiem">Bokiem</option>
-        <option value="górą">Górą</option>
-        <option value="bok_góra">Bok + Góra</option>
-        <option value="auto_winda">Auto z windą</option>
-        <option value="inne">Inne</option>
-      </select>
-    </td>
-    <td>
-      <select onchange="zmienAktualnosc(this)">
-        <option value="">-- wybierz --</option>
-        <option value="aktualne">Aktualne</option>
-        <option value="nieaktualne">Nieaktualne</option>
-        <option value="nieznane">???</option>
-      </select>
-    </td>
-    <td><textarea placeholder="Uwagi"></textarea></td>
-    <td><input type="text" placeholder="Stawka"></td>
-    <td><input type="text" placeholder="km"></td>
-    <td><input type="text" placeholder="zł/km"></td>
-    <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
-    <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
-  `;
-}
-
-function usunWiersz(button) {
-  if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
-    const wiersz = button.closest("tr");
-    wiersz.remove();
-  }
-}
-</script>
-<script>
-function aktualizujStawkeZKm(wiersz) {
-  const kmInput = wiersz.cells[11].querySelector("input");
-  const stawkaInput = wiersz.cells[10].querySelector("input");
-  const wynikInput = wiersz.cells[12].querySelector("input");
-  const km = parseFloat(kmInput.value.replace(',', '.'));
-  const stawka = parseFloat(stawkaInput.value.replace(',', '.'));
-  if (!isNaN(km) && !isNaN(stawka) && km > 0) {
-    wynikInput.value = (stawka / km).toFixed(2);
-  } else {
-    wynikInput.value = "";
-  }
-}
-
-// Obserwuj zmiany wartości w stawce i kilometrach
-setInterval(() => {
-  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
-    aktualizujStawkeZKm(wiersz);
-  });
-}, 1000);
-</script>
-
-<script>
-function pokazNaMapie(checkbox) {
-  if (!checkbox.checked) return;
-
-  const wiersz = checkbox.closest("tr");
-  const ladunek = wiersz.cells[1].querySelector("input").value;
-  const rozladunek = wiersz.cells[4].querySelector("input").value;
-  const kmCell = wiersz.cells[11].querySelector("input");
-  const stawkaCell = wiersz.cells[10].querySelector("input");
-  const stawkaKmCell = wiersz.cells[12].querySelector("input");
-
-  Promise.all([
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
-      .then(res => res.json())
-      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)]),
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
-      .then(res => res.json())
-      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)])
-  ]).then(([startCoord, endCoord]) => {
-    if (!startCoord || !endCoord) return;
-
-    const url = `https://router.project-osrm.org/route/v1/driving/${startCoord.join(',')};${endCoord.join(',')}?overview=full&geometries=geojson`;
-    fetch(url)
-      .then(res => res.json())
-      .then(result => {
-        if (!result.routes || !result.routes[0]) return;
-
-        const route = result.routes[0];
-        const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-
-        if (window.mapLayer) { map.removeLayer(window.mapLayer); window.mapLayer = null; }
-if (window.startMarker) { map.removeLayer(window.startMarker); window.startMarker = null; }
-if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = null; }
-
-        window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
-        window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
-        window.endMarker = L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup('Rozładunek');
-        map.fitBounds(window.mapLayer.getBounds());
-
-        const km = (route.distance / 1000).toFixed(1);
-        if (kmCell) kmCell.value = km;
-        const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
-        if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
-          stawkaKmCell.value = (stawka / km).toFixed(2);
-        }
-      });
-  });
-}
-</script>
-<script>
-const map = L.map('map').setView([52.2297, 21.0122], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap',
-  maxZoom: 18
-}).addTo(map);
-</script>
-
-<script>
-async function zapiszDane() {
-  const rows = document.querySelectorAll("#tabela tbody tr");
-  for (const row of rows) {
-    const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
-
-    console.log('⏳ Próba zapisu danych do Supabase');
-    const dane = {
-      zaladunek: input(1),
-      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
-      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
-      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
-      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
-      rozladunek: input(4),
-      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
-      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
-      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
-      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
-      sposob_zaladunku: input(7),
-      aktualnosc: input(8),
-      uwagi: input(9),
-      stawka: input(10),
-      kilometry: input(11),
-      stawka_km: input(12),
-    };
-
-    const { error } = await client.from("translider").insert([dane]);
-    if (error) {
-      console.error("❌ Błąd zapisu:", error.message);
-      alert("❌ Błąd zapisu: " + error.message);
+  <script>
+    function toggleTruckWidget() {
+      const frame = document.getElementById("truck-widget-frame");
+      frame.style.display = (frame.style.display === "none") ? "block" : "none";
     }
-  }
-  alert("✅ Dane zapisane!");
-}
 
-window.addEventListener("DOMContentLoaded", async () => {
-  const { data, error } = await client.from("translider").select("*");
-  if (error) {
-    console.error("❌ Błąd odczytu:", error.message);
-    alert("❌ Błąd odczytu z bazy Supabase: " + error.message);
-    return;
-  }
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch('kodypolska.json')
+        .then(response => response.json())
+        .then(data => {
+          const datalist = document.getElementById("lokalizacje");
+          datalist.innerHTML = "";
+          data.forEach(entry => {
+            const option = document.createElement("option");
+            option.value = `${entry.place_name} ${entry.postal_code}`;
+            datalist.appendChild(option);
+          });
+        })
+        .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
+    });
+  </script>
 
-  const tabela = document.querySelector("#tabela tbody");
-  data.forEach(entry => {
-    const row = tabela.insertRow();
-    row.classList.add("pilne");
-    row.innerHTML = `
-      <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
-      <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
-      <td class="date-time-group"><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
-      <td class="date-time-group"><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
-      <td><input type="text" list="lokalizacje" value="${entry.rozladunek || ''}"></td>
-      <td class="date-time-group"><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
-      <td class="date-time-group"><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
-      <td><select><option>${entry.sposob_zaladunku || ''}</option></select></td>
-      <td><select><option>${entry.aktualnosc || ''}</option></select></td>
-      <td><textarea>${entry.uwagi || ''}</textarea></td>
-      <td><input type="text" value="${entry.stawka || ''}"></td>
-      <td><input type="text" value="${entry.kilometry || ''}"></td>
-      <td><input type="text" value="${entry.stawka_km || ''}"></td>
-      <td><input type="checkbox"></td>
-      <td><button onclick="this.closest('tr').remove()">🗑️ Usuń</button></td>
-    `;
-  });
-});
-</script>
+  <script>
+    function togglePilne(checkbox) {
+      const row = checkbox.closest("tr");
+      if (!row) return;
+      if (checkbox.checked) {
+        row.classList.add("pilne");
+      } else {
+        row.classList.remove("pilne");
+      }
+    }
+    function zmienAktualnosc(select) {
+      const row = select.closest("tr");
+      if (!row) return;
+      row.classList.remove("status-aktualne", "status-nieaktualne", "status-nieznane");
+      if (select.value === "aktualne") {
+        row.classList.add("status-aktualne");
+      } else if (select.value === "nieaktualne") {
+        row.classList.add("status-nieaktualne");
+      } else if (select.value === "nieznane") {
+        row.classList.add("status-nieznane");
+      }
+    }
+    function dodajWiersz() {
+      const tabela = document.querySelector("#tabela tbody");
+      if (!tabela) return;
+      const wiersz = tabela.insertRow();
+      wiersz.classList.add("pilne");
+      wiersz.innerHTML = `
+        <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
+        <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
+        <td class="date-time-group"><input type="date"> <input type="date"></td>
+        <td class="date-time-group"><input type="time"> <input type="time"></td>
+        <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
+        <td class="date-time-group"><input type="date"> <input type="date"></td>
+        <td class="date-time-group"><input type="time"> <input type="time"></td>
+        <td>
+          <select>
+            <option value="tyłem">Tyłem</option>
+            <option value="bokiem">Bokiem</option>
+            <option value="górą">Górą</option>
+            <option value="bok_góra">Bok + Góra</option>
+            <option value="auto_winda">Auto z windą</option>
+            <option value="inne">Inne</option>
+          </select>
+        </td>
+        <td>
+          <select onchange="zmienAktualnosc(this)">
+            <option value="">-- wybierz --</option>
+            <option value="aktualne">Aktualne</option>
+            <option value="nieaktualne">Nieaktualne</option>
+            <option value="nieznane">???</option>
+          </select>
+        </td>
+        <td><textarea placeholder="Uwagi"></textarea></td>
+        <td><input type="text" placeholder="Stawka"></td>
+        <td><input type="text" placeholder="km"></td>
+        <td><input type="text" placeholder="zł/km"></td>
+        <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
+        <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
+      `;
+      return wiersz;
+    }
+    function usunWiersz(button) {
+      if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
+        const wiersz = button.closest("tr");
+        wiersz.remove();
+      }
+    }
+  </script>
+  <script>
+    function aktualizujStawkeZKm(wiersz) {
+      const kmInput = wiersz.cells[11].querySelector("input");
+      const stawkaInput = wiersz.cells[10].querySelector("input");
+      const wynikInput = wiersz.cells[12].querySelector("input");
+      const km = parseFloat(kmInput.value.replace(',', '.'));
+      const stawka = parseFloat(stawkaInput.value.replace(',', '.'));
+      if (!isNaN(km) && !isNaN(stawka) && km > 0) {
+        wynikInput.value = (stawka / km).toFixed(2);
+      } else {
+        wynikInput.value = "";
+      }
+    }
+    // Obserwuj zmiany wartości w stawce i kilometrach
+    setInterval(() => {
+      document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+        aktualizujStawkeZKm(wiersz);
+      });
+    }, 1000);
+  </script>
+  <script>
+    function pokazNaMapie(checkbox) {
+      if (!checkbox.checked) return;
 
+      const wiersz = checkbox.closest("tr");
+      const ladunek = wiersz.cells[1].querySelector("input").value;
+      const rozladunek = wiersz.cells[4].querySelector("input").value;
+      const kmCell = wiersz.cells[11].querySelector("input");
+      const stawkaCell = wiersz.cells[10].querySelector("input");
+      const stawkaKmCell = wiersz.cells[12].querySelector("input");
+
+      Promise.all([
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
+          .then(res => res.json())
+          .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)]),
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
+          .then(res => res.json())
+          .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)])
+      ]).then(([startCoord, endCoord]) => {
+        if (!startCoord || !endCoord) return;
+
+        const url = `https://router.project-osrm.org/route/v1/driving/${startCoord.join(',')};${endCoord.join(',')}?overview=full&geometries=geojson`;
+        fetch(url)
+          .then(res => res.json())
+          .then(result => {
+            if (!result.routes || !result.routes[0]) return;
+
+            const route = result.routes[0];
+            const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+            if (window.mapLayer) { map.removeLayer(window.mapLayer); window.mapLayer = null; }
+            if (window.startMarker) { map.removeLayer(window.startMarker); window.startMarker = null; }
+            if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = null; }
+
+            window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
+            window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
+            window.endMarker = L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup('Rozładunek');
+            map.fitBounds(window.mapLayer.getBounds());
+
+            const km = (route.distance / 1000).toFixed(1);
+            if (kmCell) kmCell.value = km;
+            const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
+            if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
+              stawkaKmCell.value = (stawka / km).toFixed(2);
+            }
+          });
+      });
+    }
+  </script>
+  <script>
+    const map = L.map('map').setView([52.2297, 21.0122], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 18
+    }).addTo(map);
+  </script>
+
+  <!-- Wczytaj istniejące rekordy z bazy i dodaj je do tabeli -->
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: records, error } = await supabase.from("translider").select("*");
+      if (error) {
+        console.error("❌ Błąd podczas wczytywania danych:", error.message);
+      } else if (records) {
+        records.forEach(rec => {
+          const row = dodajWiersz();
+          if (!row) return;
+          row.dataset.id = rec.id;
+          row.cells[1].querySelector("input").value = rec.zaladunek || "";
+          if (rec.data_zaladunku_od) row.cells[2].querySelectorAll("input")[0].value = rec.data_zaladunku_od;
+          if (rec.data_zaladunku_do) row.cells[2].querySelectorAll("input")[1].value = rec.data_zaladunku_do;
+          if (rec.godzina_zaladunku_od) row.cells[3].querySelectorAll("input")[0].value = rec.godzina_zaladunku_od;
+          if (rec.godzina_zaladunku_do) row.cells[3].querySelectorAll("input")[1].value = rec.godzina_zaladunku_do;
+          row.cells[4].querySelector("input").value = rec.rozladunek || "";
+          if (rec.data_rozladunku_od) row.cells[5].querySelectorAll("input")[0].value = rec.data_rozladunku_od;
+          if (rec.data_rozladunku_do) row.cells[5].querySelectorAll("input")[1].value = rec.data_rozladunku_do;
+          if (rec.godzina_rozladunku_od) row.cells[6].querySelectorAll("input")[0].value = rec.godzina_rozladunku_od;
+          if (rec.godzina_rozladunku_do) row.cells[6].querySelectorAll("input")[1].value = rec.godzina_rozladunku_do;
+          row.cells[7].querySelector("select").value = rec.sposob_zaladunku || "tyłem";
+          row.cells[8].querySelector("select").value = rec.aktualnosc || "";
+          row.cells[9].querySelector("textarea").value = rec.uwagi || "";
+          row.cells[10].querySelector("input").value = rec.stawka || "";
+          row.cells[11].querySelector("input").value = rec.kilometry || "";
+          row.cells[12].querySelector("input").value = rec.stawka_km || "";
+          const statusSelect = row.cells[8].querySelector("select");
+          if (statusSelect) zmienAktualnosc(statusSelect);
+        });
+      }
+    });
+  </script>
 </body>
 </html>
