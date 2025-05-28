@@ -456,7 +456,7 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
         const row = tabela.insertRow();
         row.dataset.id = entry.id;
         row.innerHTML = `
-          <td>•</td>
+          <td><input type="checkbox" class="pilne-check" onclick="togglePilne(this)"></td>
           <td><input type="text" value="${entry.zaladunek || ''}"></td>
           <td><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
           <td><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
@@ -469,6 +469,8 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
           <td><input type="number" value="${entry.stawka || ''}" step="0.01"></td>
           <td><input type="number" value="${entry.kilometry || ''}" step="1"></td>
           <td><input type="number" value="${entry.stawka_km || ''}" step="0.01"></td>
+          <td><input type="checkbox" onchange="pokazNaMapie(this)" class="btn-mapa"></td>
+          <td><button class="btn-usun" onclick="usunWiersz(this)">🗑️ Usuń</button></td>
         `;
       });
     });
