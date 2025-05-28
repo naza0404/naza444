@@ -107,7 +107,7 @@ function dodajWiersz() {
   const wiersz = tabela.insertRow();
   wiersz.classList.add("pilne");
   wiersz.innerHTML = `
-    <td><input type="checkbox" onclick="togglePilne(this)"></td>
+    <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
     <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
     <td class="date-time-group"><input type="date"> <input type="date"></td>
     <td class="date-time-group"><input type="time"> <input type="time"></td>
@@ -275,7 +275,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const row = tabela.insertRow();
     row.classList.add("pilne");
     row.innerHTML = `
-      <td><input type="checkbox" onclick="togglePilne(this)"></td>
+      <td><input type="checkbox" checked onclick="togglePilne(this)"></td>
       <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
       <td class="date-time-group"><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
       <td class="date-time-group"><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
@@ -327,7 +327,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       const filled = Object.values(dane).filter(v => v !== "").length;
       if (filled < 2) return;
 
-       = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+      if (row.dataset.id) {
+        const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
         if (error) console.error("Błąd aktualizacji:", error.message);
         else console.log("Zaktualizowano wiersz:", row.dataset.id);
       } else {
