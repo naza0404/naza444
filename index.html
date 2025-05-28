@@ -34,7 +34,19 @@
     }
   </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+</script>
 
 
 </head>
@@ -76,7 +88,19 @@
 </table>
 <div id="map" style="height: 500px; margin-top: 30px;"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js">
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+</script>
 
 <script>
 function toggleTruckWidget() {
@@ -98,6 +122,18 @@ window.addEventListener('DOMContentLoaded', () => {
     })
     .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
 });
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 
 <script>
@@ -147,6 +183,18 @@ function usunWiersz(button) {
     wiersz.remove();
   }
 }
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 <script>
 function aktualizujStawkeZKm(wiersz) {
@@ -168,6 +216,18 @@ setInterval(() => {
     aktualizujStawkeZKm(wiersz);
   });
 }, 1000);
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 
 <script>
@@ -218,6 +278,18 @@ if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = nu
       });
   });
 }
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 <script>
 const map = L.map('map').setView([52.2297, 21.0122], 6);
@@ -225,6 +297,18 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap',
   maxZoom: 18
 }).addTo(map);
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 
 <script>
@@ -293,6 +377,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     `;
   });
 });
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
 </script>
 
 <script>
@@ -376,6 +472,18 @@ window.addEventListener("DOMContentLoaded", async () => {
         `;
       });
     });
-  </script>
+  
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+</script>
 </body>
 </html>
