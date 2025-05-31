@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <title>Platforma ZaĹ‚adunku i RozĹ‚adunku</title>
   <style>
-    .pilne { background-color: #ffbebe; font-weight: bold; }
+    .pilne-highlight { background-color: #ffcccc !important; font-weight: bold; }
     button { cursor: pointer; }
   </style>
 </head>
@@ -32,42 +32,39 @@
     function podlaczZdarzeniaDoWiersza(row) {
       const pilneCheckbox = row.querySelector(".pilne-check");
       if (pilneCheckbox) {
-        pilneCheckbox.onchange = () => {
-          row.classList.toggle("pilne");
-          sortujPilneNaTopie();
-        };
+        pilneCheckbox.addEventListener("change", () => togglePilne(pilneCheckbox));
       }
 
-      const mapaCheckbox = row.querySelector(".mapa-check");
+      const mapaCheckbox = row.querySelector(".btn-mapa");
       if (mapaCheckbox) {
-        mapaCheckbox.onchange = () => {
+        mapaCheckbox.addEventListener("change", () => {
           const z = row.children[1].querySelector("input").value;
           const r = row.children[4].querySelector("input").value;
           if (z && r) window.open(`https://www.google.com/maps/dir/${z}/${r}`, "_blank");
-        };
+        });
       }
 
-      const usunBtn = row.querySelector("button");
+      const usunBtn = row.querySelector(".btn-usun");
       if (usunBtn) {
-        usunBtn.onclick = () => {
+        usunBtn.addEventListener("click", () => {
           const id = row.dataset.id;
           if (id) {
             client.from("zlecenia").delete().eq("id", id).then(() => row.remove());
           } else {
             row.remove();
           }
-        };
+        });
       }
     }
 
-    function sortujPilneNaTopie() {
-      const rows = Array.from(tabela.querySelectorAll("tr"));
-      rows.sort((a, b) => {
-        const ap = a.classList.contains("pilne") ? 1 : 0;
-        const bp = b.classList.contains("pilne") ? 1 : 0;
-        return bp - ap;
-      });
-      rows.forEach(row => tabela.appendChild(row));
+    function togglePilne(checkbox) {
+      const row = checkbox.closest("tr");
+      if (checkbox.checked) {
+        row.classList.add("pilne-highlight");
+        row.parentNode.prepend(row);
+      } else {
+        row.classList.remove("pilne-highlight");
+      }
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -90,14 +87,14 @@
             <td><input type="number" value="${entry.stawka || ''}"></td>
             <td><input type="number" value="${entry.kilometry || ''}"></td>
             <td><input type="number" value="${entry.stawka_km || ''}"></td>
-            <td><input type="checkbox" class="mapa-check"></td>
-            <td><button>đź—‘ď¸Ź</button></td>
+            <td><input type="checkbox" class="btn-mapa"></td>
+            <td><button class="btn-usun">đź—‘ď¸Ź</button></td>
           `;
-          podlaczZdarzeniaDoWiersza(row);
+          podlaczZdarzeniaDoWiersza(row); // <- KLUCZOWE
         });
-        sortujPilneNaTopie();
       }
     });
   </script>
 </body>
 </html>
+
