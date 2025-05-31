@@ -46,18 +46,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 
 
@@ -112,18 +100,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 
 <script>
@@ -156,18 +132,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
 
     const usun = wiersz.querySelector('.btn-usun');
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
-}
-
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
 }
 
 </script>
@@ -231,18 +195,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 <script>
 function aktualizujStawkeZKm(wiersz) {
@@ -274,18 +226,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
 
     const usun = wiersz.querySelector('.btn-usun');
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
-}
-
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
 }
 
 </script>
@@ -350,18 +290,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 <script>
 const map = L.map('map').setView([52.2297, 21.0122], 6);
@@ -379,18 +307,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
 
     const usun = wiersz.querySelector('.btn-usun');
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
-}
-
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
 }
 
 </script>
@@ -473,18 +389,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 
 <script>
@@ -552,7 +456,7 @@ function sortujPilneNaTopie() {
         const row = tabela.insertRow();
         row.dataset.id = entry.id;
         row.innerHTML = `
-          <td>•</td>
+          <td><input type="checkbox" class="pilne-check" onclick="togglePilne(this)"></td>
           <td><input type="text" value="${entry.zaladunek || ''}"></td>
           <td><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
           <td><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
@@ -565,6 +469,8 @@ function sortujPilneNaTopie() {
           <td><input type="number" value="${entry.stawka || ''}" step="0.01"></td>
           <td><input type="number" value="${entry.kilometry || ''}" step="1"></td>
           <td><input type="number" value="${entry.stawka_km || ''}" step="0.01"></td>
+          <td><input type="checkbox" onchange="pokazNaMapie(this)" class="btn-mapa"></td>
+          <td><button class="btn-usun" onclick="usunWiersz(this)">🗑️ Usuń</button></td>
         `;
       });
     });
@@ -580,19 +486,6 @@ function podlaczZdarzeniaDoWiersza(wiersz) {
     if (usun) usun.addEventListener('click', () => usunWiersz(usun));
 }
 
-
-function sortujPilneNaTopie() {
-    const tbody = document.querySelector("tbody");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.sort((a, b) => {
-        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
-        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
-        return aPilne - bPilne;
-    });
-    rows.forEach(row => tbody.appendChild(row));
-}
-
 </script>
 </body>
 </html>
-
