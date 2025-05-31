@@ -1,102 +1,597 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <title>Platforma ZaĹ‚adunku i RozĹ‚adunku</title>
+  <title>Platforma Załadunku i Rozładunku</title>
   <style>
-    .pilne-highlight { background-color: #ffcccc !important; font-weight: bold; }
-    button { cursor: pointer; }
+    body { font-family: Arial, sans-serif; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    .pilne { background-color: #ffe6e6; }
+    .status-aktualne { background-color: #a5f3a1 !important; font-weight: bold; }
+    .status-nieaktualne { background-color: #f9a1a1 !important; font-weight: bold; }
+    .status-nieznane { background-color: #fff7a1 !important; font-weight: bold; }
+    .date-time-group input {
+      width: 45%;
+      display: inline-block;
+      margin: 2px 1%;
+    }
+    textarea { width: 100%; height: 60px; resize: vertical; }
+    input[list], input[type="text"] { width: 100%; }
+    #targeoMap {
+      width: 100%;
+      height: 500px;
+      margin-top: 30px;
+      border: none;
+    }
   </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+
 </head>
 <body>
-  <table>
-    <thead>
-      <tr>
-        <th>Pilne</th><th>ZaĹ‚adunek</th><th>Data ZaĹ‚adunku</th><th>Godz. ZaĹ‚adunku</th>
-        <th>RozĹ‚adunek</th><th>Data RozĹ‚adunku</th><th>Godz. RozĹ‚adunku</th><th>SposĂłb</th>
-        <th>Status</th><th>Uwagi</th><th>Stawka</th><th>KM</th><th>Stawka/KM</th>
-        <th>Mapa</th><th>UsuĹ„</th>
-      </tr>
-    </thead>
-    <tbody id="tabela"></tbody>
-  </table>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    const supabaseUrl = 'https://bfknyzfmhojjghhkxyrv.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc';
-    const client = supabase.createClient(supabaseUrl, supabaseKey);
-    const tabela = document.getElementById("tabela");
+<div id="truck-ban-widget" style="margin: 10px 0; text-align: center;">
+  <button onclick="toggleTruckWidget()" style="margin-bottom: 5px;">Pokaż/Ukryj zakazy ruchu</button>
+  <div id="truck-widget-frame">
+    <iframe src="https://trafficban.com/plugins/box.html?language=pl" width="100%" height="300" frameborder="0"></iframe>
+  </div>
+</div>
 
-    function podlaczZdarzeniaDoWiersza(row, pilneValue = false) {
-      const pilneCheckbox = row.querySelector(".pilne-check");
-      if (pilneCheckbox) {
-        pilneCheckbox.checked = pilneValue;
-        pilneCheckbox.addEventListener("change", () => togglePilne(pilneCheckbox));
-        if (pilneValue) togglePilne(pilneCheckbox); // od razu przesuĹ„ i zaznacz
-      }
+<h1>Platforma Załadunku i Rozładunku</h1>
+<button onclick="zapiszDane()">💾 Zapisz dane do Supabase</button>
+<button onclick="dodajWiersz()">➕ Dodaj nowy wiersz</button>
+<datalist id="lokalizacje"></datalist>
 
-      const mapaCheckbox = row.querySelector(".btn-mapa");
-      if (mapaCheckbox) {
-        mapaCheckbox.addEventListener("change", () => {
-          const z = row.children[1].querySelector("input").value;
-          const r = row.children[4].querySelector("input").value;
-          if (z && r) window.open(`https://www.google.com/maps/dir/${z}/${r}`, "_blank");
-        });
-      }
+<table id="tabela">
+  <thead>
+    <tr>
+      <th>PILNE</th>
+      <th>Załadunek</th>
+      <th>Data załadunku (od-do)</th>
+      <th>Godzina załadunku (od-do)</th>
+      <th>Rozładunek</th>
+      <th>Data rozładunku (od-do)</th>
+      <th>Godzina rozładunku (od-do)</th>
+      <th>Sposób załadunku</th>
+      <th>Potwierdź aktualność</th>
+      <th>Uwagi</th>
+      <th>Stawka</th>
+      <th>Kilometry</th>
+      <th>Stawka z km</th>
+      <th>Mapka</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<div id="map" style="height: 500px; margin-top: 30px;"></div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js">
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
 
-      const usunBtn = row.querySelector(".btn-usun");
-      if (usunBtn) {
-        usunBtn.addEventListener("click", async () => {
-          const id = row.dataset.id;
-          if (id) {
-            await client.from("zlecenia").delete().eq("id", id);
-            row.remove();
-          } else {
-            row.remove();
-          }
-        });
-      }
-    }
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
 
-    function togglePilne(checkbox) {
-      const row = checkbox.closest("tr");
-      if (checkbox.checked) {
-        row.classList.add("pilne-highlight");
-        row.parentNode.prepend(row);
-      } else {
-        row.classList.remove("pilne-highlight");
-      }
-    }
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      const { data, error } = await client.from("zlecenia").select("*");
-      if (data) {
-        data.forEach(entry => {
-          const row = tabela.insertRow();
-          row.dataset.id = entry.id;
-          row.innerHTML = `
-            <td><input type="checkbox" class="pilne-check"></td>
-            <td><input type="text" value="${entry.zaladunek || ''}"></td>
-            <td><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
-            <td><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
-            <td><input type="text" value="${entry.rozladunek || ''}"></td>
-            <td><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
-            <td><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
-            <td><input type="text" value="${entry.sposob_zaladunku || ''}"></td>
-            <td><input type="text" value="${entry.aktualnosc || ''}"></td>
-            <td><textarea>${entry.uwagi || ''}</textarea></td>
-            <td><input type="number" value="${entry.stawka || ''}"></td>
-            <td><input type="number" value="${entry.kilometry || ''}"></td>
-            <td><input type="number" value="${entry.stawka_km || ''}"></td>
-            <td><input type="checkbox" class="btn-mapa"></td>
-            <td><button class="btn-usun">đź—‘ď¸Ź</button></td>
-          `;
-          podlaczZdarzeniaDoWiersza(row, entry.pilne === true);
-        });
-      }
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
     });
-  </script>
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+<script>
+function toggleTruckWidget() {
+  const frame = document.getElementById("truck-widget-frame");
+  frame.style.display = (frame.style.display === "none") ? "block" : "none";
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetch('kodypolska.json')
+    .then(response => response.json())
+    .then(data => {
+      const datalist = document.getElementById("lokalizacje");
+      datalist.innerHTML = "";
+      data.forEach(entry => {
+        const option = document.createElement("option");
+        option.value = `${entry.place_name} ${entry.postal_code}`;
+        datalist.appendChild(option);
+      });
+    })
+    .catch(error => console.error("Błąd podczas ładowania lokalizacji z kodypolska.json:", error));
+});
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+<script>
+function dodajWiersz() {
+  const tabela = document.querySelector("#tabela tbody");
+  if (!tabela) return;
+  const wiersz = tabela.insertRow();
+  wiersz.classList.add("pilne");
+  wiersz.innerHTML = `
+    <td><input type="checkbox" checked  onclick="togglePilne(this)"></td>
+    <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
+    <td class="date-time-group"><input type="date"> <input type="date"></td>
+    <td class="date-time-group"><input type="time"> <input type="time"></td>
+    <td><input type="text" list="lokalizacje" placeholder="Miasto Kod"></td>
+    <td class="date-time-group"><input type="date"> <input type="date"></td>
+    <td class="date-time-group"><input type="time"> <input type="time"></td>
+    <td>
+      <select>
+        <option value="tyłem">Tyłem</option>
+        <option value="bokiem">Bokiem</option>
+        <option value="górą">Górą</option>
+        <option value="bok_góra">Bok + Góra</option>
+        <option value="auto_winda">Auto z windą</option>
+        <option value="inne">Inne</option>
+      </select>
+    </td>
+    <td>
+      <select onchange="zmienAktualnosc(this)">
+        <option value="">-- wybierz --</option>
+        <option value="aktualne">Aktualne</option>
+        <option value="nieaktualne">Nieaktualne</option>
+        <option value="nieznane">???</option>
+      </select>
+    </td>
+    <td><textarea placeholder="Uwagi"></textarea></td>
+    <td><input type="text" placeholder="Stawka"></td>
+    <td><input type="text" placeholder="km"></td>
+    <td><input type="text" placeholder="zł/km"></td>
+    <td><input type="checkbox" onchange="pokazNaMapie(this)"></td>
+    <td><button onclick="usunWiersz(this)">🗑️ Usuń</button></td>
+  `;
+}
+
+function usunWiersz(button) {
+  if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
+    const wiersz = button.closest("tr");
+    wiersz.remove();
+  }
+}
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+<script>
+function aktualizujStawkeZKm(wiersz) {
+  const kmInput = wiersz.cells[11].querySelector("input");
+  const stawkaInput = wiersz.cells[10].querySelector("input");
+  const wynikInput = wiersz.cells[12].querySelector("input");
+  const km = parseFloat(kmInput.value.replace(',', '.'));
+  const stawka = parseFloat(stawkaInput.value.replace(',', '.'));
+  if (!isNaN(km) && !isNaN(stawka) && km > 0) {
+    wynikInput.value = (stawka / km).toFixed(2);
+  } else {
+    wynikInput.value = "";
+  }
+}
+
+// Obserwuj zmiany wartości w stawce i kilometrach
+setInterval(() => {
+  document.querySelectorAll("#tabela tbody tr").forEach(wiersz => {
+    aktualizujStawkeZKm(wiersz);
+  });
+}, 1000);
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+<script>
+function pokazNaMapie(checkbox) {
+  if (!checkbox.checked) return;
+
+  const wiersz = checkbox.closest("tr");
+  const ladunek = wiersz.cells[1].querySelector("input").value;
+  const rozladunek = wiersz.cells[4].querySelector("input").value;
+  const kmCell = wiersz.cells[11].querySelector("input");
+  const stawkaCell = wiersz.cells[10].querySelector("input");
+  const stawkaKmCell = wiersz.cells[12].querySelector("input");
+
+  Promise.all([
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ladunek)}`)
+      .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)]),
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rozladunek)}`)
+      .then(res => res.json())
+      .then(data => data[0] && [parseFloat(data[0].lon), parseFloat(data[0].lat)])
+  ]).then(([startCoord, endCoord]) => {
+    if (!startCoord || !endCoord) return;
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${startCoord.join(',')};${endCoord.join(',')}?overview=full&geometries=geojson`;
+    fetch(url)
+      .then(res => res.json())
+      .then(result => {
+        if (!result.routes || !result.routes[0]) return;
+
+        const route = result.routes[0];
+        const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+        if (window.mapLayer) { map.removeLayer(window.mapLayer); window.mapLayer = null; }
+if (window.startMarker) { map.removeLayer(window.startMarker); window.startMarker = null; }
+if (window.endMarker) { map.removeLayer(window.endMarker); window.endMarker = null; }
+
+        window.mapLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
+        window.startMarker = L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup('Załadunek');
+        window.endMarker = L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup('Rozładunek');
+        map.fitBounds(window.mapLayer.getBounds());
+
+        const km = (route.distance / 1000).toFixed(1);
+        if (kmCell) kmCell.value = km;
+        const stawka = parseFloat(stawkaCell.value.replace(',', '.'));
+        if (!isNaN(stawka) && km > 0 && stawkaKmCell) {
+          stawkaKmCell.value = (stawka / km).toFixed(2);
+        }
+      });
+  });
+}
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+<script>
+const map = L.map('map').setView([52.2297, 21.0122], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 18
+}).addTo(map);
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+<script>
+async function zapiszDane() {
+  const rows = document.querySelectorAll("#tabela tbody tr");
+  for (const row of rows) {
+    const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value || "";
+
+    console.log('⏳ Próba zapisu danych do Supabase');
+    const dane = {
+      zaladunek: input(1),
+      data_zaladunku_od: row.cells[2].querySelectorAll("input")[0].value,
+      data_zaladunku_do: row.cells[2].querySelectorAll("input")[1].value,
+      godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0].value,
+      godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1].value,
+      rozladunek: input(4),
+      data_rozladunku_od: row.cells[5].querySelectorAll("input")[0].value,
+      data_rozladunku_do: row.cells[5].querySelectorAll("input")[1].value,
+      godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0].value,
+      godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1].value,
+      sposob_zaladunku: input(7),
+      aktualnosc: input(8),
+      uwagi: input(9),
+      stawka: input(10),
+      kilometry: input(11),
+      stawka_km: input(12),
+    };
+
+    const { error } = await client.from("translider").insert([dane]);
+    if (error) {
+      console.error("❌ Błąd zapisu:", error.message);
+      alert("❌ Błąd zapisu: " + error.message);
+    }
+  }
+  alert("✅ Dane zapisane!");
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const { data, error } = await client.from("translider").select("*");
+  if (error) {
+    console.error("❌ Błąd odczytu:", error.message);
+    alert("❌ Błąd odczytu z bazy Supabase: " + error.message);
+    return;
+  }
+
+  const tabela = document.querySelector("#tabela tbody");
+  data.forEach(entry => {
+    const row = tabela.insertRow();
+    row.classList.add("pilne");
+    row.innerHTML = `
+      <td><input type="checkbox" checked  onclick="togglePilne(this)"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.zaladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
+      <td><input type="text" list="lokalizacje" value="${entry.rozladunek || ''}"></td>
+      <td class="date-time-group"><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
+      <td class="date-time-group"><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
+      <td><select><option>${entry.sposob_zaladunku || ''}</option></select></td>
+      <td><select><option>${entry.aktualnosc || ''}</option></select></td>
+      <td><textarea>${entry.uwagi || ''}</textarea></td>
+      <td><input type="text" value="${entry.stawka || ''}"></td>
+      <td><input type="text" value="${entry.kilometry || ''}"></td>
+      <td><input type="text" value="${entry.stawka_km || ''}"></td>
+      <td><input type="checkbox"></td>
+      <td><button onclick="this.closest('tr').remove()">🗑️ Usuń</button></td>
+    `;
+  });
+});
+
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
+
+<script>
+    const supabase = window.supabase.createClient(
+      'https://bfknyzfmhojjghhkxyrv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma255emZtaG9qamdoaGt4eXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTc4NTYsImV4cCI6MjA2Mzg3Mzg1Nn0.pQbR3wHdzhE4nP7PEIn5rASLNNwFa3-qKqkymDgxVLc'
+    );
+
+    async function autoSave(row) {
+      if (!row || !row.cells || row.cells.length < 13) return;
+      const input = (i) => row.cells[i]?.querySelector("input, select, textarea")?.value?.trim() || "";
+
+      const dane = {
+        zaladunek: input(1),
+        data_zaladunku_od: row.cells[2].querySelectorAll("input")[0]?.value.trim() || "",
+        data_zaladunku_do: row.cells[2].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_zaladunku_od: row.cells[3].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_zaladunku_do: row.cells[3].querySelectorAll("input")[1]?.value.trim() || "",
+        rozladunek: input(4),
+        data_rozladunku_od: row.cells[5].querySelectorAll("input")[0]?.value.trim() || "",
+        data_rozladunku_do: row.cells[5].querySelectorAll("input")[1]?.value.trim() || "",
+        godzina_rozladunku_od: row.cells[6].querySelectorAll("input")[0]?.value.trim() || "",
+        godzina_rozladunku_do: row.cells[6].querySelectorAll("input")[1]?.value.trim() || "",
+        sposob_zaladunku: input(7),
+        aktualnosc: input(8),
+        uwagi: input(9),
+        stawka: input(10),
+        kilometry: input(11),
+        stawka_km: input(12)
+      };
+
+      const filled = Object.values(dane).filter(v => v !== "").length;
+      if (filled < 2) return;
+
+      if (row.dataset.id) {
+        const { error } = await supabase.from("translider").update(dane).eq("id", row.dataset.id);
+        if (error) console.error("Błąd aktualizacji:", error.message);
+        else console.log("Zaktualizowano wiersz:", row.dataset.id);
+      } else {
+        const { data, error } = await supabase.from("translider").insert([dane]).select("id");
+        if (error) console.error("Błąd zapisu:", error.message);
+        else {
+          console.log("Zapisano wiersz:", data[0]?.id);
+          row.dataset.id = data[0]?.id;
+        }
+      }
+    }
+
+    document.addEventListener("change", (e) => {
+      const row = e.target.closest("tr");
+      if (row) autoSave(row);
+    });
+
+    document.addEventListener("blur", (e) => {
+      const row = e.target.closest("tr");
+      if (row) autoSave(row);
+    }, true);
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const { data, error } = await supabase.from("translider").select("*");
+      if (error) return console.error("Błąd odczytu:", error.message);
+
+      const tabela = document.querySelector("#tabela tbody");
+      data.forEach(entry => {
+        const row = tabela.insertRow();
+        row.dataset.id = entry.id;
+        row.innerHTML = `
+          <td>•</td>
+          <td><input type="text" value="${entry.zaladunek || ''}"></td>
+          <td><input type="date" value="${entry.data_zaladunku_od || ''}"> <input type="date" value="${entry.data_zaladunku_do || ''}"></td>
+          <td><input type="time" value="${entry.godzina_zaladunku_od || ''}"> <input type="time" value="${entry.godzina_zaladunku_do || ''}"></td>
+          <td><input type="text" value="${entry.rozladunek || ''}"></td>
+          <td><input type="date" value="${entry.data_rozladunku_od || ''}"> <input type="date" value="${entry.data_rozladunku_do || ''}"></td>
+          <td><input type="time" value="${entry.godzina_rozladunku_od || ''}"> <input type="time" value="${entry.godzina_rozladunku_do || ''}"></td>
+          <td><input type="text" value="${entry.sposob_zaladunku || ''}"></td>
+          <td><input type="text" value="${entry.aktualnosc || ''}"></td>
+          <td><textarea>${entry.uwagi || ''}</textarea></td>
+          <td><input type="number" value="${entry.stawka || ''}" step="0.01"></td>
+          <td><input type="number" value="${entry.kilometry || ''}" step="1"></td>
+          <td><input type="number" value="${entry.stawka_km || ''}" step="0.01"></td>
+        `;
+      });
+    });
+  
+function podlaczZdarzeniaDoWiersza(wiersz) {
+    const pilne = wiersz.querySelector('.pilne-check');
+    if (pilne) pilne.addEventListener('change', () => togglePilne(pilne));
+
+    const mapa = wiersz.querySelector('.btn-mapa');
+    if (mapa) mapa.addEventListener('click', () => pokazMape(mapa));
+
+    const usun = wiersz.querySelector('.btn-usun');
+    if (usun) usun.addEventListener('click', () => usunWiersz(usun));
+}
+
+
+function sortujPilneNaTopie() {
+    const tbody = document.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a, b) => {
+        const aPilne = a.querySelector(".pilne-check")?.checked ? 0 : 1;
+        const bPilne = b.querySelector(".pilne-check")?.checked ? 0 : 1;
+        return aPilne - bPilne;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+</script>
 </body>
 </html>
